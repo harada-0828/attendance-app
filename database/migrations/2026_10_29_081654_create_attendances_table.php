@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
 
-            // 同じユーザーが同じ日に重複して出勤データを作らないためのユニーク制約
+            // 同じユーザーが同じ日に重複して出勤データを作らないための複合ユニーク制約
             $table->unique(['user_id', 'date']);
         });
     }
