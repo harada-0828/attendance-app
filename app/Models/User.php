@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,10 +10,6 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-
-    // --- ロール定義 ---
-    const ROLE_ADMIN = 0;   // 管理者
-    const ROLE_USER = 1;    // 一般ユーザー
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'admin_status',
     ];
 
     /**
@@ -45,18 +40,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed', // パスワードの自動ハッシュ化
+            'password' => 'hashed',          // パスワードの自動ハッシュ化
+            'admin_status' => 'boolean',     
         ];
-    }
-
-    /**
-     * ロール番号を人間が読みやすい文字列に変換するアクセサ
-     */
-    protected function roleName(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value, $attributes) => $attributes['role'] === self::ROLE_ADMIN ? '管理者' : '一般ユーザー'
-        );
     }
 
     public function attendances(): HasMany

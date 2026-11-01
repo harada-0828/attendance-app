@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->tinyInteger('role'); // 0: 管理者, 1: 一般ユーザー
+            $table->boolean('admin_status')->default(false); // true: 管理者, false: 一般ユーザー
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
         });
