@@ -17,6 +17,11 @@ class Attendance extends Model
         'clock_out',
     ];
 
+    protected $casts = [
+        'date' => 'date',
+        'clock_in' => 'datetime',
+        'clock_out' => 'datetime',
+    ];
 
     /**
      * 時間のデータ状態から現在のステータスを動的に判定して返すアクセサ
@@ -44,12 +49,10 @@ class Attendance extends Model
         return '勤務外';
     }
 
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
-
     
     public function rests(): HasMany
     {
@@ -60,5 +63,4 @@ class Attendance extends Model
     {
         return $this->hasMany(Request::class);
     }
-
 }

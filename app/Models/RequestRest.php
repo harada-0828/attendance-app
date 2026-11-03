@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +15,10 @@ class RequestRest extends Model
         'break_end',
     ];
 
+    protected $casts = [
+        'break_start' => 'datetime',
+        'break_end' => 'datetime',
+    ];
     
     public function request(): BelongsTo
     {

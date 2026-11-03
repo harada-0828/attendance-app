@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +15,11 @@ class Rest extends Model
         'break_end',
     ];
 
+    protected $casts = [
+        'break_start' => 'datetime',
+        'break_end' => 'datetime',
+    ];
+
     /**
      * 休憩が終了しているかどうかを返すアクセサ
      */
@@ -23,7 +27,6 @@ class Rest extends Model
     {
         return !is_null($this->break_end);
     }
-
     
     public function attendance(): BelongsTo
     {
