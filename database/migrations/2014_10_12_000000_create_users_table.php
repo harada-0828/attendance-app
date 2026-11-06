@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->dateTime('email_verified_at')->nullable(); // 追加: datetime型・null許容
             $table->string('password');
             $table->boolean('admin_status')->default(false); // true: 管理者, false: 一般ユーザー
             $table->timestamp('created_at')->nullable();
