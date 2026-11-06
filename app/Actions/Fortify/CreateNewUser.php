@@ -22,6 +22,9 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        // 第1引数: $input
+        // 第2引数: バリデーションルールの配列
+        // 第3引数: カスタムメッセージの配列
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -32,6 +35,13 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class),
             ],
             'password' => $this->passwordRules(),
+        ], [
+            'name.required' => 'お名前を入力してください',
+            'email.required' => 'メールアドレスを入力してください',
+            'email.email' => 'メールアドレスはメール形式で入力してください',
+            'password.required' => 'パスワードを入力してください',
+            'password.confirmed' => 'パスワードと一致しません',
+            'password.min' => 'パスワードは8文字以上で入力してください',
         ])->validate();
 
         return User::create([
