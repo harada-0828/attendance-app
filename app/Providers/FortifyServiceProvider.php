@@ -3,9 +3,6 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
-use App\Actions\Fortify\UpdateUserPassword;
-use App\Actions\Fortify\UpdateUserProfileInformation;
 use Laravel\Fortify\Contracts\LoginResponse;
 use App\Http\Responses\LoginResponse as CustomLoginResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
@@ -16,8 +13,10 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use App\Http\Responses\LogoutResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -28,6 +27,9 @@ class FortifyServiceProvider extends ServiceProvider
     {
         // 新規ユーザー作成アクションのバインド
         $this->app->singleton(CreatesNewUsers::class, CreateNewUser::class);
+        
+        // Fortifyのログアウト時の挙動を、作成したクラスにする
+        $this->app->singleton(LogoutResponseContract::class, LogoutResponse::class);
     }
 
     /**
@@ -56,11 +58,48 @@ class FortifyServiceProvider extends ServiceProvider
             return view('user.user-login');
         });
 
-        // 3. ログイン時のレートリミットの設定
+        // 3. 認証処理のカスタマイズ（admin_statusで一般・管理者を厳格に振り分け）
+        Fortify::authenticateUsing(function (Request $request) {
+            // 管理者ログイン画面からの送信かどうか
+            $isAdminLogin = $request->input('login_type') === 'admin';
+
+            // メールアドレスからユーザーを検索
+            $user = \App\Models\User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return null;
+            }
+
+            // パスワードの検証
+            if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                return null;
+            }
+
+            // ★admin_status カラムを使って権限チェック
+            if ($isAdminLogin) {
+                // 管理者ログイン画面で、一般ユーザーでのログインは弾く
+                if (!$user->admin_status) {
+                    return null;
+                }
+                $guard = 'admin';
+            } else {
+                // 一般ログイン画面で、管理者のログインは弾く
+                if ($user->admin_status) {
+                    return null;
+                }
+                $guard = 'web';
+            }
+
+            // 正しい権限の場合のみログイン処理を実行
+            Auth::guard($guard)->login($user, $request->boolean('remember'));
+            return $user;
+        });
+
+        // 4. ログイン時のレートリミットの設定
         RateLimiter::for('login', function (Request $request) {
             $email = (string) $request->email;
 
             return Limit::perMinute(5)->by($email . $request->ip());
         });
-    }
+    } 
 }

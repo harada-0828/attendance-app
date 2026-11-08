@@ -16,7 +16,7 @@ class LoginResponse implements LoginResponseContract
             return redirect()->intended('/admin/attendance/list');
         }
 
-        // 一般ユーザーの場合（出勤登録画面のURLへリダイレクト）
-        return redirect()->intended('/attendance/register');
+        // 一般ユーザーの場合
+        return redirect()->intended('/attendance');
     }
 }

@@ -19,7 +19,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'email_verified_at', // 追加
+        'email_verified_at', 
         'password',
         'admin_status',
     ];
@@ -41,7 +41,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime', // 追加: 日付型へキャスト
+            'email_verified_at' => 'datetime', 
             'password' => 'hashed',
             'admin_status' => 'boolean',     
         ];
