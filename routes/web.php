@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,18 +25,12 @@ Route::get('/admin/login', function () {
 // ==========================================
 Route::middleware('auth')->group(function () {
     
-    // --- 画面表示・一覧 ---
-    // 一般ユーザー用のホーム（打刻画面）
-    Route::get('/attendance', function () {
-        $user = auth()->user();
-        $formattedDate = now()->format('Y年m月d日');
-        $formattedTime = now()->format('H:i');
+    // --- 一般ユーザー用の打刻画面 ---
+    Route::get('/attendance', [AttendanceController::class, 'create'])->name('attendance.create');
+    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
 
-        return view('user.attendance-register', compact('user', 'formattedDate', 'formattedTime'));
-    });
-
-    // 管理者用の勤怠一覧
-    Route::get('/admin/attendance/list', [AttendanceController::class, 'index']);
+    // --- 管理者用の勤怠一覧 ---
+    Route::get('/admin/attendance/list', [AdminAttendanceController::class, 'index']);
 
 
     // --- ログアウト処理 ---
