@@ -10,9 +10,13 @@
         <h1 class="content__header--item">勤怠一覧</h1>
     </div>
     <div class="content__menu">
-        <a class="previous-month" href="?date={{ $previousMonth }}">前月</a>
+        {{-- 前月リンクに左矢印を追加 --}}
+        <a class="previous-month" href="?date={{ $previousMonth }}">&larr; 前月</a>
+        
         <p class="current-month">{{ $date->format('Y/m') }}</p>
-        <a class="next-month" href="?date={{ $nextMonth }}">翌月</a>
+        
+        {{-- 翌月リンクに右矢印を追加 --}}
+        <a class="next-month" href="?date={{ $nextMonth }}">翌月 &rarr;</a>
     </div>
     <table class="table">
         <tr class="table__row">
@@ -55,7 +59,7 @@
             </td>
             <td class="table__description">
                 @if (!empty($attendanceRecord['id']))
-                <a class="table__item--detail-link" href="{{ url('/attendance/' . $attendanceRecord['id']) }}">詳細</a>
+                <a class="table__item--detail-link" href="{{ route('attendance.detail', $attendanceRecord['id']) }}">詳細</a>
                 @endif
             </td>
         </tr>

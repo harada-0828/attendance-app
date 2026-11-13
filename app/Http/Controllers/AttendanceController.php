@@ -11,6 +11,64 @@ use Illuminate\Support\Facades\Auth;
 class AttendanceController extends Controller
 {
     /**
+     * 勤怠一覧画面の表示 
+     */
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+
+        // 1. クエリパラメータ 'date' から表示する月を取得
+        $dateStr = $request->input('date', Carbon::now()->format('Y-m'));
+        $date = Carbon::parse($dateStr);
+
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
+
+        // 2. 前月と翌月のリンク用文字列を作成 (FN024)
+        $previousMonth = $date->copy()->subMonth()->format('Y-m');
+        $nextMonth = $date->copy()->addMonth()->format('Y-m');
+
+        // 3. ログインユーザーの指定月の勤怠データを取得し、日付をキーにする (FN023)
+        $attendances = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get()
+            ->keyBy(function ($item) {
+                return Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+        // 4. Blade側のループ（$formattedAttendanceRecords）に合わせて1ヶ月分のデータを組み立て
+        $formattedAttendanceRecords = [];
+        $periodDate = $startDate->copy();
+
+        while ($periodDate <= $endDate) {
+            $dateKey = $periodDate->format('Y-m-d');
+            $attendance = $attendances->get($dateKey);
+
+            
+            $formattedDate = $periodDate->isoFormat('MM/DD(ddd)');
+
+            $formattedAttendanceRecords[] = [
+                'id' => $attendance ? $attendance->id : null,
+                'date' => $formattedDate, 
+                'clock_in' => $attendance && $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : '',
+                'clock_out' => $attendance && $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : '',
+                'total_break_time' => $attendance ? $attendance->total_break_time : null,
+                'total_time' => $attendance ? $attendance->total_time : null,
+            ];
+
+            $periodDate->addDay();
+        }
+
+        // 5. Bladeへ変数を渡す
+        return view('user.user-attendance-list', compact(
+            'date',
+            'previousMonth',
+            'nextMonth',
+            'formattedAttendanceRecords'
+        ));
+    }
+
+    /**
      * 出勤登録画面（打刻画面）の表示
      */
     public function create()
@@ -27,7 +85,7 @@ class AttendanceController extends Controller
         $status = $attendance ? $attendance->status : '勤務外';
 
         $formatter = new \IntlDateFormatter('ja_JP', \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, 'Asia/Tokyo', \IntlDateFormatter::GREGORIAN, 'yyyy年M月d日(E)');
-$formattedDate = $formatter->format(now());
+        $formattedDate = $formatter->format(now());
         $formattedTime = now()->format('H:i');
 
         return view('user.attendance-register', compact('user', 'attendance', 'status', 'formattedDate', 'formattedTime'));
