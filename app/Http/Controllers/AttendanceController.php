@@ -17,26 +17,24 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        // 1. クエリパラメータ 'date' から表示する月を取得
         $dateStr = $request->input('date', Carbon::now()->format('Y-m'));
         $date = Carbon::parse($dateStr);
 
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();
 
-        // 2. 前月と翌月のリンク用文字列を作成 (FN024)
         $previousMonth = $date->copy()->subMonth()->format('Y-m');
         $nextMonth = $date->copy()->addMonth()->format('Y-m');
 
-        // 3. ログインユーザーの指定月の勤怠データを取得し、日付をキーにする (FN023)
+        // ▼ イーガーローディング（restsも一緒に取得）を適用して日付をキーにする
         $attendances = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
+            ->with('rests')
             ->get()
             ->keyBy(function ($item) {
                 return Carbon::parse($item->date)->format('Y-m-d');
             });
 
-        // 4. Blade側のループ（$formattedAttendanceRecords）に合わせて1ヶ月分のデータを組み立て
         $formattedAttendanceRecords = [];
         $periodDate = $startDate->copy();
 
@@ -44,7 +42,6 @@ class AttendanceController extends Controller
             $dateKey = $periodDate->format('Y-m-d');
             $attendance = $attendances->get($dateKey);
 
-            
             $formattedDate = $periodDate->isoFormat('MM/DD(ddd)');
 
             $formattedAttendanceRecords[] = [
@@ -59,7 +56,6 @@ class AttendanceController extends Controller
             $periodDate->addDay();
         }
 
-        // 5. Bladeへ変数を渡す
         return view('user.user-attendance-list', compact(
             'date',
             'previousMonth',
@@ -76,12 +72,12 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $today = Carbon::today();
 
-        // 本日の打刻データを取得
+        // rests も含めてイーガーローディング
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today->toDateString())
+            ->with('rests')
             ->first();
 
-        // ステータスを判定（打刻データがない場合は「勤務外」扱いにするためカスタム属性を安全に取得）
         $status = $attendance ? $attendance->status : '勤務外';
 
         $formatter = new \IntlDateFormatter('ja_JP', \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, 'Asia/Tokyo', \IntlDateFormatter::GREGORIAN, 'yyyy年M月d日(E)');
@@ -100,9 +96,8 @@ class AttendanceController extends Controller
         $today = Carbon::today();
         $now = Carbon::now();
 
-        $action = $request->input('action'); // どのボタンが押されたかを受け取る
+        $action = $request->input('action');
 
-        // 本日の打刻データを取得、またはインスタンスを準備
         $attendance = Attendance::firstOrNew([
             'user_id' => $user->id,
             'date' => $today->toDateString(),
@@ -110,7 +105,6 @@ class AttendanceController extends Controller
 
         switch ($action) {
             case 'clock_in':
-                // すでに退勤済または出勤済みの場合は弾く
                 if (!$attendance->exists) {
                     $attendance->clock_in = $now;
                     $attendance->save();
@@ -118,7 +112,6 @@ class AttendanceController extends Controller
                 break;
 
             case 'rest_in':
-                // 出勤中で、現在休憩中でない場合のみ休憩開始を記録
                 if ($attendance->exists && $attendance->status === '出勤中') {
                     Rest::create([
                         'attendance_id' => $attendance->id,
@@ -128,7 +121,6 @@ class AttendanceController extends Controller
                 break;
 
             case 'rest_out':
-                // 現在「休憩中」の場合、最新の休憩データの休憩終了時刻を記録
                 if ($attendance->exists && $attendance->status === '休憩中') {
                     $latestRest = $attendance->rests()->latest('id')->first();
                     if ($latestRest && is_null($latestRest->break_end)) {
@@ -139,7 +131,6 @@ class AttendanceController extends Controller
                 break;
 
             case 'clock_out':
-                // 現在「出勤中」の場合のみ退勤を記録
                 if ($attendance->exists && $attendance->status === '出勤中') {
                     $attendance->clock_out = $now;
                     $attendance->save();

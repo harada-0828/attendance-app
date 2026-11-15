@@ -9,7 +9,7 @@
         <div class="detail__header">
             <h1 class="content__header--item">勤怠詳細</h1>
         </div>
-        <form class="form" action="{{ url('/attendance/' . $attendanceRecord['id']) }}" method="post">
+        <form class="form" action="{{ url('/admin/attendance/' . $attendanceRecord['id']) }}" method="post">
             @csrf
                 <div class="form__content">
                     <div class="form__group">
@@ -22,7 +22,7 @@
                     <div class="form__group">
                         <label class="form__header">日付</label>
                         <div class="form__input-group">
-                            {{-- 日付は表示のみ（修正不可）。名前欄と同様に枠線（border）を外す --}}
+                            {{-- 日付は表示のみ（修正不可） --}}
                             <input class="form__input form__input--date" type="text" value="{{ $attendanceRecord['year'] }}" readonly>
                             <input class="form__input form__input--date" type="text" name="new_date" value="{{ $attendanceRecord['date'] }}" readonly>
                         </div>
@@ -60,6 +60,7 @@
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
                             <div class="form__input-group">
+                        
                                 <input class="form__input" type="text" name="new_break_in[{{ $index }}]"
                                     value="{{ $break['break_in'] ?? '' }}">
                                 <p>〜</p>
@@ -75,6 +76,7 @@
                             </div>
                         </div>
                     @endforeach
+                    
                     {{-- 新しい休憩を追加できるよう末尾に空欄を1つ用意 --}}
                     @php $newBreakIndex = count($breaks); @endphp
                     <div class="form__group">

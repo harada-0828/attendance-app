@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,15 +33,20 @@ Route::middleware('auth')->group(function () {
     // 1. 勤怠一覧画面 (FN023, FN024)
     Route::get('/attendance/list', [AttendanceController::class, 'index'])->name('attendance.list');
     
-    // 2. 勤怠詳細画面の表示 (GET) [設計書通りのパスに変更]
+    // 2. 勤怠詳細画面の表示 (GET)
     Route::get('/attendance/detail/{id}', [RequestController::class, 'show'])->name('attendance.detail');
     
-    // 3. 勤怠詳細の修正申請 (POST) [設計書通りのパスに変更]
+    // 3. 勤怠詳細の修正申請 (POST)
     Route::post('/attendance/detail/{id}', [RequestController::class, 'store'])->name('attendance.update');
 
-    // 4. 申請一覧画面（一般ユーザー）
-    Route::get('/stamp_correction_request/list', [RequestController::class, 'index'])
-        ->name('stamp_correction_request.list');
+    // 4. 申請一覧画面（※一般ユーザーと管理者でアクセス先コントローラーを自動切り分け）
+    Route::get('/stamp_correction_request/list', function (Request $request) {
+        $user = Auth::user();
+        if ($user && $user->admin_status) {
+            return app(AdminRequestController::class)->index();
+        }
+        return app(RequestController::class)->index();
+    })->name('stamp_correction_request.list');
 
     // --- 一般ユーザー用ログアウト ---
     Route::post('/logout', function (Request $request) {
@@ -55,11 +61,15 @@ Route::middleware('auth')->group(function () {
 
 
 // ==========================================
-// 3. 管理者用ルート（認証済みを想定する場合）
+// 3. 管理者用ルート
 // ==========================================
 Route::middleware('auth')->group(function () {
     // 管理者用の勤怠一覧
     Route::get('/admin/attendance/list', [AdminAttendanceController::class, 'index'])->name('admin.attendance.list');
+
+    // 管理者用の勤怠詳細画面表示・直接修正処理
+    Route::get('/admin/attendance/{id}', [AdminAttendanceController::class, 'show'])->name('admin.attendance.detail');
+    Route::post('/admin/attendance/{id}', [AdminAttendanceController::class, 'store'])->name('admin.attendance.update');
 
     // 管理者用ログアウト
     Route::post('/admin/logout', function (Request $request) {

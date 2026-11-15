@@ -9,7 +9,7 @@
         <div class="detail__header">
             <h1 class="content__header--item">勤怠詳細</h1>
         </div>
-        <form class="form" action="{{ url('/attendance/' . $data['id']) }}" method="post">
+        <form class="form" action="{{ route('attendance.update', $data['id']) }}" method="post">
             @csrf
 
             @if (is_null($data['application']))
@@ -26,7 +26,6 @@
                     <div class="form__group">
                         <label class="form__header">日付</label>
                         <div class="form__input-group">
-                            {{-- 日付は表示のみ（修正不可）。名前欄と同様に枠線（border）を外す --}}
                             <input class="form__input form__input--date" type="text" value="{{ $data['year'] }}" readonly>
                             <input class="form__input form__input--date" type="text" name="new_date" value="{{ $data['date'] }}" readonly>
                         </div>
@@ -49,7 +48,7 @@
                         </div>
                     </div>
 
-                    {{-- 休憩は「休憩」「休憩2」…とセクション分け表示。エラーは各行の入力欄の直下に個別表示する --}}
+                    {{-- 休憩 --}}
                     @foreach($data['breaks'] as $index => $break)
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
@@ -67,7 +66,8 @@
                             </div>
                         </div>
                     @endforeach
-                    {{-- 新しい休憩を追加できるよう末尾に空欄を1つ用意 --}}
+
+                    {{-- 新しい休憩の空欄 --}}
                     @php $newBreakIndex = count($data['breaks']); @endphp
                     <div class="form__group">
                         <label class="form__header">{{ $newBreakIndex === 0 ? '休憩' : '休憩' . ($newBreakIndex + 1) }}</label>
@@ -110,8 +110,7 @@
                     <div class="form__group">
                         <label class="form__header">名前</label>
                         <div class="form__input-group">
-                            <input class="form__input form__input--name readonly" type="text" value="{{ $user->name }}"
-                                readonly>
+                            <input class="form__input form__input--name readonly" type="text" value="{{ $user->name }}" readonly>
                         </div>
                     </div>
 
@@ -132,16 +131,13 @@
                         </div>
                     </div>
 
-                    {{-- 休憩は「休憩」「休憩2」「休憩3」…とセクションを分けて表示 --}}
                     @foreach($data['breaks'] as $index => $break)
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
                             <div class="form__input-group">
-                                <input class="form__input readonly" type="text" name="new_break_in[]"
-                                    value="{{ $break['break_in'] }}" readonly>
+                                <input class="form__input readonly" type="text" value="{{ $break['break_in'] }}" readonly>
                                 <p>〜</p>
-                                <input class="form__input readonly" type="text" name="new_break_out[]"
-                                    value="{{ $break['break_out'] }}" readonly>
+                                <input class="form__input readonly" type="text" value="{{ $break['break_out'] }}" readonly>
                             </div>
                         </div>
                     @endforeach
@@ -149,8 +145,7 @@
                     <div class="form__group">
                         <label class="form__header">備考</label>
                         <div class="form__input-group">
-                            <input class="form__textarea readonly" name="comment" value="{{ $data['comment'] }}"
-                                readonly></input>
+                            <textarea class="form__textarea readonly" name="comment" readonly>{{ $data['comment'] }}</textarea>
                         </div>
                     </div>
                 </div>

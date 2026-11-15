@@ -20,19 +20,17 @@ class RequestController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
-        // 1. ログインユーザーのすべての申請データを取得
+        // ▼ イーガーローディング（attendance と user を同時に取得）が正しく実装されています
         $requests = AttendanceRequest::with(['attendance', 'user'])
             ->where('user_id', $userId)
             ->get();
 
-        // 2. Blade側が求めている $formattedApplications の形式にデータを整形・変換する
         $formattedApplications = $requests->map(function ($req) {
             $dateObj = Carbon::parse($req->attendance->date ?? now());
             
             return [
                 'id' => $req->id,
                 'attendance_id' => $req->attendance_id,
-                // Blade側で 'approval_status' が '承認待ち' かどうかで振り分けているため文字列に変換
                 'approval_status' => $req->approval_status ? '承認待ち' : '承認済み', 
                 'date' => $dateObj->format('Y/m/d'), 
                 'comment' => $req->reason, 
@@ -40,7 +38,6 @@ class RequestController extends Controller
             ];
         });
 
-        // 3. 申請一覧ビューへデータを渡す
         return view('user.user-application-list', compact('formattedApplications', 'user'));
     }
 
@@ -52,13 +49,21 @@ class RequestController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
-        // 1. 対象の勤怠データを取得
-        $attendance = Attendance::with(['user', 'rests', 'requests'])
+        // ▼ user と rests のイーガーローディング
+        $attendance = Attendance::with(['user', 'rests'])
             ->where('user_id', $userId)
             ->findOrFail($id);
 
         $dateObj = Carbon::parse($attendance->date);
         
+        $pendingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
+            ->where('approval_status', 1)
+            ->first();
+
+        $latestRequest = AttendanceRequest::where('attendance_id', $attendance->id)
+            ->latest('id')
+            ->first();
+
         $data = [
             'id' => $attendance->id,
             'year' => $dateObj->format('Y年'), 
@@ -73,10 +78,8 @@ class RequestController extends Controller
                 ];
             })->toArray(),
 
-            'comment' => $attendance->memo ?? '', 
-            
-            // 「承認待ち」の申請が存在するか判定してBladeに渡す。
-            'application' => $attendance->requests->where('approval_status', true)->first(),
+            'comment' => $latestRequest ? $latestRequest->reason : '', 
+            'application' => $pendingRequest,
         ];
 
         return view('user.user-detail', compact('attendance', 'data', 'user'));
@@ -87,29 +90,23 @@ class RequestController extends Controller
      */
     public function store(UpdateAttendanceRequest $request, $id)
     {
-        // 1. バリデーション済みデータの取得
         $validated = $request->validated();
         $userId = Auth::id();
 
-        // 2. 該当勤怠データの存在確認
         $attendance = Attendance::where('user_id', $userId)->findOrFail($id);
 
-        // 3. データベースへの登録処理（トランザクション）
         DB::transaction(function () use ($attendance, $validated, $userId) {
-            
             $attendanceRequest = AttendanceRequest::create([
                 'attendance_id'       => $attendance->id,
                 'user_id'             => $userId,
                 'requested_clock_in'  => $validated['new_clock_in'],
                 'requested_clock_out' => $validated['new_clock_out'],
                 'reason'              => $validated['comment'],
-                'approval_status'     => true, // 申請済み(true)
+                'approval_status'     => true,
             ]);
 
-            // 休憩申請データの保存（request_restsテーブル）
             if (!empty($validated['new_break_in'])) {
                 foreach ($validated['new_break_in'] as $index => $breakIn) {
-                    // 入力がある場合のみ保存
                     if (!empty($breakIn)) {
                         RequestRest::create([
                             'request_id'  => $attendanceRequest->id,
@@ -121,7 +118,6 @@ class RequestController extends Controller
             }
         });
 
-        // 4. 登録後のリダイレクト（定義した route('attendance.detail', $id) により /attendance/detail/{id} へ飛ぶ）
         return redirect()->route('attendance.detail', $id)->with('success', '修正申請を送信しました。');
     }
 }
