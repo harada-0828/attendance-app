@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\Rest;
+use App\Models\Request as AttendanceRequest;
 
 class AttendanceController extends Controller
 {
@@ -19,24 +20,20 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
-        // リクエストから日付を取得（指定がない場合は今日）
         $dateQuery = $request->query('date', Carbon::today()->format('Y-m-d'));
         $date = Carbon::parse($dateQuery);
 
         $previousDay = $date->copy()->subDay()->format('Y-m-d');
         $nextDay = $date->copy()->addDay()->format('Y-m-d');
 
-        // ▼ イーガーローディングを適用：ユーザーと一緒にその日の勤怠と休憩データも一括取得
         $users = User::with(['attendances' => function ($query) use ($date) {
             $query->whereDate('date', $date->format('Y-m-d'))->with('rests');
         }])->get();
 
-        // 互換性のために attendanceRecords も保持
         $attendanceRecords = Attendance::whereDate('date', $date->format('Y-m-d'))
             ->with(['user', 'rests'])
             ->get();
 
-        // ビューに必要な変数をすべて渡す
         return view('admin.admin-attendance-list', compact(
             'user', 
             'date', 
@@ -52,19 +49,15 @@ class AttendanceController extends Controller
      */
     public function show($id)
     {
-        // 勤怠データとそれに紐づくユーザー、休憩データを取得（イーガーローディング適用済み）
         $attendance = Attendance::with(['user', 'rests'])->findOrFail($id);
         $user = $attendance->user;
 
-        // requestsテーブルから直近の申請理由（reason）を取得してコメント代わりにする
-        $latestRequest = \DB::table('requests')
-            ->where('attendance_id', $attendance->id)
-            ->latest('id')
+        $pendingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
+            ->where('approval_status', true)
             ->first();
 
-        $comment = $latestRequest ? $latestRequest->reason : '';
+        $comment = '';
 
-        // ビュー（admin-detail.blade.php）が期待するデータ構造に整形
         $attendanceRecord = [
             'id' => $attendance->id,
             'year' => Carbon::parse($attendance->date)->format('Y年'),
@@ -78,6 +71,7 @@ class AttendanceController extends Controller
                 ];
             })->toArray(),
             'comment' => $comment,
+            'application' => $pendingRequest,
         ];
 
         return view('admin.admin-detail', compact('user', 'attendanceRecord'));
@@ -89,6 +83,15 @@ class AttendanceController extends Controller
     public function store(AdminUpdateAttendanceRequest $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
+
+        $hasPending = AttendanceRequest::where('attendance_id', $attendance->id)
+            ->where('approval_status', true)
+            ->exists();
+
+        if ($hasPending) {
+            return redirect()->back()->withErrors(['error' => '承認待ちの修正申請が存在するため、現在は直接修正できません。']);
+        }
+
         $attendanceDate = Carbon::parse($attendance->date)->format('Y-m-d');
 
         $clockInInput = $request->input('new_clock_in');
@@ -114,13 +117,16 @@ class AttendanceController extends Controller
         foreach ($breakIns as $index => $breakIn) {
             $breakOut = $breakOuts[$index] ?? null;
 
-            if (!empty($breakIn) && $breakIn !== 'null' && !empty($breakOut) && $breakOut !== 'null') {
-                Rest::create([
-                    'attendance_id' => $attendance->id,
-                    'break_start' => $attendanceDate . ' ' . $breakIn . ':00',
-                    'break_end' => $attendanceDate . ' ' . $breakOut . ':00',
-                ]);
+            // ▼ 【追加のガード】空欄、null、または「開始と終了が全く同じ時間」の場合はデータベースに登録（加算）しない
+            if (empty($breakIn) || $breakIn === 'null' || empty($breakOut) || $breakOut === 'null' || $breakIn === $breakOut) {
+                continue;
             }
+
+            Rest::create([
+                'attendance_id' => $attendance->id,
+                'break_start' => $attendanceDate . ' ' . $breakIn . ':00',
+                'break_end' => $attendanceDate . ' ' . $breakOut . ':00',
+            ]);
         }
 
         $comment = $request->input('comment');

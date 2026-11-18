@@ -34,9 +34,10 @@
                     <div class="form__group">
                         <label class="form__header" for="new_clock_in">出勤・退勤</label>
                         <div class="form__input-group">
-                            <input class="form__input" id="new_clock_in" type="text" name="new_clock_in" value="{{ $data['clock_in'] }}">
+                            {{-- ▼ old() を追加して入力値を保持 --}}
+                            <input class="form__input" id="new_clock_in" type="text" name="new_clock_in" value="{{ old('new_clock_in', $data['clock_in']) }}">
                             <p>〜</p>
-                            <input class="form__input" type="text" name="new_clock_out" value="{{ $data['clock_out'] }}">
+                            <input class="form__input" type="text" name="new_clock_out" value="{{ old('new_clock_out', $data['clock_out']) }}">
                         </div>
                     </div>
 
@@ -48,14 +49,38 @@
                         </div>
                     </div>
 
-                    {{-- 休憩 --}}
-                    @foreach($data['breaks'] as $index => $break)
+                    {{-- ▼ 休憩：old入力とDBデータを考慮してループ描画 --}}
+                    @php
+                        $oldBreakIns = old('new_break_in');
+                        $oldBreakOuts = old('new_break_out');
+                        
+                        $dbBreaks = (isset($data['breaks']) && is_array($data['breaks']))
+                            ? $data['breaks'] : [];
+
+                        // oldデータがある場合はその数、なければDBの数 + 1行（新規追加用空き欄）を確保
+                        if (!is_null($oldBreakIns)) {
+                            $loopCount = count($oldBreakIns);
+                        } else {
+                            $loopCount = count($dbBreaks) + 1;
+                        }
+                    @endphp
+
+                    @for($index = 0; $index < $loopCount; $index++)
+                        @php
+                            if (!is_null($oldBreakIns)) {
+                                $breakInVal = $oldBreakIns[$index] ?? '';
+                                $breakOutVal = $oldBreakOuts[$index] ?? '';
+                            } else {
+                                $breakInVal = $dbBreaks[$index]['break_in'] ?? '';
+                                $breakOutVal = $dbBreaks[$index]['break_out'] ?? '';
+                            }
+                        @endphp
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
                             <div class="form__input-group">
-                                <input class="form__input" type="text" name="new_break_in[{{ $index }}]" value="{{ $break['break_in'] }}">
+                                <input class="form__input" type="text" name="new_break_in[{{ $index }}]" value="{{ $breakInVal }}">
                                 <p>〜</p>
-                                <input class="form__input" type="text" name="new_break_out[{{ $index }}]" value="{{ $break['break_out'] }}">
+                                <input class="form__input" type="text" name="new_break_out[{{ $index }}]" value="{{ $breakOutVal }}">
                             </div>
                         </div>
                         <div class="error-message">
@@ -65,30 +90,13 @@
                                 @error('new_break_out.' . $index)<p>{{ $message }}</p>@enderror
                             </div>
                         </div>
-                    @endforeach
-
-                    {{-- 新しい休憩の空欄 --}}
-                    @php $newBreakIndex = count($data['breaks']); @endphp
-                    <div class="form__group">
-                        <label class="form__header">{{ $newBreakIndex === 0 ? '休憩' : '休憩' . ($newBreakIndex + 1) }}</label>
-                        <div class="form__input-group">
-                            <input class="form__input" type="text" name="new_break_in[{{ $newBreakIndex }}]" value="">
-                            <p>〜</p>
-                            <input class="form__input" type="text" name="new_break_out[{{ $newBreakIndex }}]" value="">
-                        </div>
-                    </div>
-                    <div class="error-message">
-                        <div></div>
-                        <div class="error-message__item">
-                            @error('new_break_in.' . $newBreakIndex)<p>{{ $message }}</p>@enderror
-                            @error('new_break_out.' . $newBreakIndex)<p>{{ $message }}</p>@enderror
-                        </div>
-                    </div>
+                    @endfor
 
                     <div class="form__group">
                         <label class="form__header" for="comment">備考</label>
                         <div class="form__input-group">
-                            <input class="form__textarea" id="comment" name="comment" value="{{ $data['comment'] }}">
+                            {{-- ▼ 備考欄も old() で保持（inputタグになっているためそのまま適用） --}}
+                            <input class="form__textarea" id="comment" name="comment" value="{{ old('comment', $data['comment']) }}">
                         </div>
                     </div>
 

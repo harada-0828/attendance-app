@@ -23,7 +23,7 @@ Route::get('/admin/login', function () {
 
 
 // ==========================================
-// 2. 認証済みユーザー用ルート（一般ユーザー向け）
+// 2. 認証済みユーザー用ルート（一般ユーザー・管理者共通）
 // ==========================================
 Route::middleware('auth')->group(function () {
     // --- 一般ユーザー用の打刻画面 ---
@@ -39,7 +39,7 @@ Route::middleware('auth')->group(function () {
     // 3. 勤怠詳細の修正申請 (POST)
     Route::post('/attendance/detail/{id}', [RequestController::class, 'store'])->name('attendance.update');
 
-    // 4. 申請一覧画面（※一般ユーザーと管理者でアクセス先コントローラーを自動切り分け）
+    // 4. 申請一覧画面（一般ユーザーと管理者でアクセス先コントローラーを自動切り分け）
     Route::get('/stamp_correction_request/list', function (Request $request) {
         $user = Auth::user();
         if ($user && $user->admin_status) {
@@ -47,6 +47,15 @@ Route::middleware('auth')->group(function () {
         }
         return app(RequestController::class)->index();
     })->name('stamp_correction_request.list');
+
+    // ==========================================
+    // ▼ 【追加】管理者用の修正申請 詳細・承認画面用ルート
+    // ==========================================
+    Route::get('/stamp_correction_request/approve/{id}', [AdminRequestController::class, 'show'])
+        ->name('admin.stamp_correction_request.approve');
+    
+    Route::post('/stamp_correction_request/approve/{id}', [AdminRequestController::class, 'update'])
+        ->name('admin.stamp_correction_request.update');
 
     // --- 一般ユーザー用ログアウト ---
     Route::post('/logout', function (Request $request) {

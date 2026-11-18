@@ -9,13 +9,13 @@
     <div class="detail__header">
         <h1 class="content__header--item">勤怠詳細</h1>
     </div>
-    <form class="applied-form" action="{{ url('/stamp_correction_request/approve/' . $application['id']) }}" method="post">
+   <form class="applied-form" action="{{ url('/stamp_correction_request/approve/' . $application->id) }}" method="post">
         @csrf
         <div class="applied-form__content">
             <div class="applied-form__group">
                 <label class="applied-form__header">名前</label>
                 <div class="applied-form__input-group">
-                    <input class="applied-form__input" type="text" name="name" value="{{ $user->name }}" readonly>
+                   <input class="applied-form__input" type="text" name="name" value="{{ $application->user->name }}" readonly>
                 </div>
             </div>
             <div class="applied-form__group">

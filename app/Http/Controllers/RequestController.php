@@ -20,7 +20,6 @@ class RequestController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
-        // ▼ イーガーローディング（attendance と user を同時に取得）が正しく実装されています
         $requests = AttendanceRequest::with(['attendance', 'user'])
             ->where('user_id', $userId)
             ->get();
@@ -49,14 +48,14 @@ class RequestController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
-        // ▼ user と rests のイーガーローディング
         $attendance = Attendance::with(['user', 'rests'])
             ->where('user_id', $userId)
             ->findOrFail($id);
 
         $dateObj = Carbon::parse($attendance->date);
         
-        $pendingRequest = AttendanceRequest::where('attendance_id', $attendance->id)
+        $pendingRequest = AttendanceRequest::with('requestRests')
+            ->where('attendance_id', $attendance->id)
             ->where('approval_status', 1)
             ->first();
 
@@ -82,6 +81,21 @@ class RequestController extends Controller
             'application' => $pendingRequest,
         ];
 
+        if ($pendingRequest) {
+            $data['clock_in'] = $pendingRequest->requested_clock_in ? Carbon::parse($pendingRequest->requested_clock_in)->format('H:i') : $data['clock_in'];
+            $data['clock_out'] = $pendingRequest->requested_clock_out ? Carbon::parse($pendingRequest->requested_clock_out)->format('H:i') : $data['clock_out'];
+            $data['comment'] = $pendingRequest->reason ?? $data['comment'];
+
+            if ($pendingRequest->requestRests && $pendingRequest->requestRests->count() > 0) {
+                $data['breaks'] = $pendingRequest->requestRests->map(function ($r) {
+                    return [
+                        'break_in'  => $r->break_start ? Carbon::parse($r->break_start)->format('H:i') : '',
+                        'break_out' => $r->break_end ? Carbon::parse($r->break_end)->format('H:i') : '',
+                    ];
+                })->toArray();
+            }
+        }
+
         return view('user.user-detail', compact('attendance', 'data', 'user'));
     }
 
@@ -106,12 +120,35 @@ class RequestController extends Controller
             ]);
 
             if (!empty($validated['new_break_in'])) {
+                $validBreaks = []; // 重複チェック用の配列
+
                 foreach ($validated['new_break_in'] as $index => $breakIn) {
-                    if (!empty($breakIn)) {
+                    $breakOut = $validated['new_break_out'][$index] ?? null;
+
+                    // 空欄、null、または開始と終了が同じ時間はスキップ
+                    if (empty($breakIn) || $breakIn === 'null' || empty($breakOut) || $breakOut === 'null' || $breakIn === $breakOut) {
+                        continue;
+                    }
+
+                    $newInterval = ['start' => $breakIn, 'end' => $breakOut];
+
+                    // すでに登録リストにある休憩時間と重複していないかチェック（ダブルチェック）
+                    $isDuplicate = false;
+                    foreach ($validBreaks as $existing) {
+                        if ($newInterval['start'] < $existing['end'] && $existing['start'] < $newInterval['end']) {
+                            $isDuplicate = true;
+                            break;
+                        }
+                    }
+
+                    // 重複していなければ登録し、RequestRestを作成
+                    if (!$isDuplicate) {
+                        $validBreaks[] = $newInterval;
+
                         RequestRest::create([
                             'request_id'  => $attendanceRequest->id,
                             'break_start' => $breakIn,
-                            'break_end'   => $validated['new_break_out'][$index] ?? null,
+                            'break_end'   => $breakOut,
                         ]);
                     }
                 }
