@@ -8,7 +8,8 @@ use App\Http\Responses\LoginResponse as CustomLoginResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use App\Http\Responses\RegisterResponse as CustomRegisterResponse;
 use Laravel\Fortify\Contracts\CreatesNewUsers; 
-
+use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
+use App\Http\Requests\LoginRequest;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use App\Http\Responses\LogoutResponse;
+use Illuminate\Validation\ValidationException; // ★追加：バリデーション例外用
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -39,7 +41,10 @@ class FortifyServiceProvider extends ServiceProvider
     {
         // ログイン成功時のレスポンスをカスタムクラスに差し替え
         $this->app->singleton(LoginResponse::class, CustomLoginResponse::class);
-
+        
+        // Fortifyのログインリクエストを上書き
+        $this->app->bind(FortifyLoginRequest::class, LoginRequest::class);
+        
         // 会員登録成功時のレスポンスをカスタムクラスに差し替え
         $this->app->singleton(RegisterResponse::class, CustomRegisterResponse::class);
 
@@ -58,7 +63,7 @@ class FortifyServiceProvider extends ServiceProvider
             return view('user.user-login');
         });
 
-        // 3. 認証処理のカスタマイズ（admin_statusで一般・管理者を厳格に振り分け）
+        // 3. 認証処理のカスタマイズ（admin_statusで一般・管理者を弾く）
         Fortify::authenticateUsing(function (Request $request) {
             // 管理者ログイン画面からの送信かどうか
             $isAdminLogin = $request->input('login_type') === 'admin';
@@ -66,26 +71,28 @@ class FortifyServiceProvider extends ServiceProvider
             // メールアドレスからユーザーを検索
             $user = \App\Models\User::where('email', $request->email)->first();
 
-            if (!$user) {
-                return null;
-            }
-
-            // パスワードの検証
-            if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
-                return null;
+            // ユーザーがいない、またはパスワードが一致しない場合
+            if (!$user || !\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => [__('auth.failed')], // lang/ja/auth.php の failed メッセージを呼び出し
+                ]);
             }
 
             // ★admin_status カラムを使って権限チェック
             if ($isAdminLogin) {
                 // 管理者ログイン画面で、一般ユーザーでのログインは弾く
                 if (!$user->admin_status) {
-                    return null;
+                    throw ValidationException::withMessages([
+                        'email' => [__('auth.failed')],
+                    ]);
                 }
                 $guard = 'admin';
             } else {
                 // 一般ログイン画面で、管理者のログインは弾く
                 if ($user->admin_status) {
-                    return null;
+                    throw ValidationException::withMessages([
+                        'email' => [__('auth.failed')],
+                    ]);
                 }
                 $guard = 'web';
             }
