@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 
@@ -48,9 +49,7 @@ Route::middleware('auth')->group(function () {
         return app(RequestController::class)->index();
     })->name('stamp_correction_request.list');
 
-    // ==========================================
-    // ▼ 【追加】管理者用の修正申請 詳細・承認画面用ルート
-    // ==========================================
+    // 管理者用の修正申請 詳細・承認画面用ルート
     Route::get('/stamp_correction_request/approve/{id}', [AdminRequestController::class, 'show'])
         ->name('admin.stamp_correction_request.approve');
     
@@ -73,8 +72,14 @@ Route::middleware('auth')->group(function () {
 // 3. 管理者用ルート
 // ==========================================
 Route::middleware('auth')->group(function () {
-    // 管理者用の勤怠一覧
+    // 管理者用の日次勤怠一覧
     Route::get('/admin/attendance/list', [AdminAttendanceController::class, 'index'])->name('admin.attendance.list');
+
+    // スタッフ一覧画面（管理者）
+    Route::get('/admin/staff/list', [AdminUserController::class, 'index'])->name('admin.staff.index');
+
+    // スタッフ別勤怠一覧画面（管理者）
+    Route::get('/admin/attendance/staff/{id}', [AdminAttendanceController::class, 'showStaffMonthly'])->name('admin.attendance.staff');
 
     // 管理者用の勤怠詳細画面表示・直接修正処理
     Route::get('/admin/attendance/{id}', [AdminAttendanceController::class, 'show'])->name('admin.attendance.detail');

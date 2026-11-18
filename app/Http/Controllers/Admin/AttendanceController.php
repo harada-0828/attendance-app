@@ -10,11 +10,12 @@ use App\Models\User;
 use App\Models\Attendance;
 use App\Models\Rest;
 use App\Models\Request as AttendanceRequest;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
     /**
-     * 管理者用日次勤怠一覧表示
+     * 管理者用日次勤怠一覧表示（管理者は除外）
      */
     public function index(Request $request)
     {
@@ -26,11 +27,16 @@ class AttendanceController extends Controller
         $previousDay = $date->copy()->subDay()->format('Y-m-d');
         $nextDay = $date->copy()->addDay()->format('Y-m-d');
 
-        $users = User::with(['attendances' => function ($query) use ($date) {
+        // ▼ 管理者（admin_status = 1）を一覧の対象から除外
+        $users = User::where('admin_status', '!=', 1)->with(['attendances' => function ($query) use ($date) {
             $query->whereDate('date', $date->format('Y-m-d'))->with('rests');
         }])->get();
 
-        $attendanceRecords = Attendance::whereDate('date', $date->format('Y-m-d'))
+        // ▼ 管理者ユーザーに紐づく勤怠レコードも除外
+        $attendanceRecords = Attendance::whereHas('user', function($q) {
+                $q->where('admin_status', '!=', 1);
+            })
+            ->whereDate('date', $date->format('Y-m-d'))
             ->with(['user', 'rests'])
             ->get();
 
@@ -44,6 +50,72 @@ class AttendanceController extends Controller
         ));
     }
 
+    /**
+     * 管理者用のスタッフ別月次勤怠一覧画面の表示 (URL: /admin/attendance/staff/{id})
+     */
+    public function showStaffMonthly(Request $request, $id)
+    {
+        $user = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        $dateQuery = $request->query('date', Carbon::today()->format('Y-m-01'));
+        $date = Carbon::parse($dateQuery);
+
+        $previousMonth = $date->copy()->subMonth()->format('Y-m-d');
+        $nextMonth = $date->copy()->addMonth()->format('Y-m-d');
+
+        $startOfMonth = $date->copy()->startOfMonth();
+        $endOfMonth = $date->copy()->endOfMonth();
+
+        $attendances = Attendance::with('rests')
+            ->where('user_id', $id)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // データの整形と労働時間・休憩時間の計算ロジック
+        $formattedAttendanceRecords = $attendances->map(function ($attendance) {
+            $totalBreakMinutes = 0;
+            foreach ($attendance->rests as $rest) {
+                if ($rest->break_start && $rest->break_end) {
+                    $totalBreakMinutes += Carbon::parse($rest->break_start)->diffInMinutes(Carbon::parse($rest->break_end));
+                }
+            }
+
+            // 総労働時間（勤務時間 - 休憩時間）の計算
+            $totalWorkMinutes = 0;
+            if ($attendance->clock_in && $attendance->clock_out) {
+                $workMinutes = Carbon::parse($attendance->clock_in)->diffInMinutes(Carbon::parse($attendance->clock_out));
+                $totalWorkMinutes = max(0, $workMinutes - $totalBreakMinutes);
+            }
+
+            $totalBreakTime = $totalBreakMinutes > 0 
+                ? sprintf('%02d:%02d', floor($totalBreakMinutes / 60), $totalBreakMinutes % 60) 
+                : null;
+
+            $totalTime = $totalWorkMinutes > 0 
+                ? sprintf('%02d:%02d', floor($totalWorkMinutes / 60), $totalWorkMinutes % 60) 
+                : null;
+
+            return [
+                'id' => $attendance->id,
+                'date' => Carbon::parse($attendance->date)->format('n月j日（' . ['日', '月', '火', '水', '木', '金', '土'][Carbon::parse($attendance->date)->dayOfWeek] . '）'),
+                'clock_in' => $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : '',
+                'clock_out' => $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : '',
+                'total_break_time' => $totalBreakTime,
+                'total_time' => $totalTime, // ★ ここに total_time を追加
+            ];
+        });
+
+        return view('admin.staff-attendance-list', compact(
+            'user', 
+            'targetUser', 
+            'date', 
+            'previousMonth', 
+            'nextMonth', 
+            'formattedAttendanceRecords'
+        ));
+    }
     /**
      * 管理者用勤怠詳細画面の表示
      */
