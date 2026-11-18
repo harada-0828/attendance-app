@@ -1,0 +1,105 @@
+<?php
+
+namespace App\Providers;
+
+use App\Actions\Fortify\CreateNewUser;
+use Laravel\Fortify\Contracts\LoginResponse;
+use App\Http\Responses\LoginResponse as CustomLoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
+use App\Http\Responses\RegisterResponse as CustomRegisterResponse;
+use Laravel\Fortify\Contracts\CreatesNewUsers; 
+
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use App\Http\Responses\LogoutResponse;
+
+class FortifyServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        // 新規ユーザー作成アクションのバインド
+        $this->app->singleton(CreatesNewUsers::class, CreateNewUser::class);
+        
+        // Fortifyのログアウト時の挙動を、作成したクラスにする
+        $this->app->singleton(LogoutResponseContract::class, LogoutResponse::class);
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        // ログイン成功時のレスポンスをカスタムクラスに差し替え
+        $this->app->singleton(LoginResponse::class, CustomLoginResponse::class);
+
+        // 会員登録成功時のレスポンスをカスタムクラスに差し替え
+        $this->app->singleton(RegisterResponse::class, CustomRegisterResponse::class);
+
+        // 1. 会員登録画面のビュー指定
+        Fortify::registerView(function () {
+            return view('user.register');
+        });
+
+        // 2. ログイン画面のビュー指定（URLで一般と管理者を切り分け）
+        Fortify::loginView(function (Request $request) {
+            if ($request->is('admin/login*')) {
+                // 管理者用ログイン画面のビューを指定（admin-login.blade.php）
+                return view('admin.admin-login');
+            }
+            // 一般ユーザー用ログイン画面のビューを指定
+            return view('user.user-login');
+        });
+
+        // 3. 認証処理のカスタマイズ（admin_statusで一般・管理者を厳格に振り分け）
+        Fortify::authenticateUsing(function (Request $request) {
+            // 管理者ログイン画面からの送信かどうか
+            $isAdminLogin = $request->input('login_type') === 'admin';
+
+            // メールアドレスからユーザーを検索
+            $user = \App\Models\User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return null;
+            }
+
+            // パスワードの検証
+            if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                return null;
+            }
+
+            // ★admin_status カラムを使って権限チェック
+            if ($isAdminLogin) {
+                // 管理者ログイン画面で、一般ユーザーでのログインは弾く
+                if (!$user->admin_status) {
+                    return null;
+                }
+                $guard = 'admin';
+            } else {
+                // 一般ログイン画面で、管理者のログインは弾く
+                if ($user->admin_status) {
+                    return null;
+                }
+                $guard = 'web';
+            }
+
+            // 正しい権限の場合のみログイン処理を実行
+            Auth::guard($guard)->login($user, $request->boolean('remember'));
+            return $user;
+        });
+
+        // 4. ログイン時のレートリミットの設定
+        RateLimiter::for('login', function (Request $request) {
+            $email = (string) $request->email;
+
+            return Limit::perMinute(5)->by($email . $request->ip());
+        });
+    } 
+}

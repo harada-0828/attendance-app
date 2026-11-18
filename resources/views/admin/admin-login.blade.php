@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>勤怠管理システム</title>
+    <title>勤怠管理システム - 管理者ログイン</title>
     @vite(['resources/css/sanitize.css', 'resources/css/common.css', 'resources/css/admin/admin-login.css'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,8 +24,11 @@
             <div class="login__heading">
                 <h1 class="login__heading--item">管理者ログイン</h1>
             </div>
-            <form class="form" action="/admin/login" method="post" novalidate>
+            <form class="form" action="/login" method="post" novalidate>
                 @csrf
+                <!-- 管理者ログインであることを判別するための隠しフィールド -->
+                <input type="hidden" name="login_type" value="admin">
+
                 <div class="form__group">
                     <label class="form__label" for="email">メールアドレス</label>
                     <input class="form__input" id="email" type="email" name="email" value="{{ old('email') }}">
