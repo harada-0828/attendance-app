@@ -9,7 +9,7 @@
         <div class="detail__header">
             <h1 class="content__header--item">勤怠詳細</h1>
         </div>
-        <form class="form" action="{{ url('/attendance/' . $data['id']) }}" method="post">
+        <form class="form" action="{{ route('attendance.update', $data['id']) }}" method="post">
             @csrf
 
             @if (is_null($data['application']))
@@ -26,7 +26,6 @@
                     <div class="form__group">
                         <label class="form__header">日付</label>
                         <div class="form__input-group">
-                            {{-- 日付は表示のみ（修正不可）。名前欄と同様に枠線（border）を外す --}}
                             <input class="form__input form__input--date" type="text" value="{{ $data['year'] }}" readonly>
                             <input class="form__input form__input--date" type="text" name="new_date" value="{{ $data['date'] }}" readonly>
                         </div>
@@ -35,9 +34,10 @@
                     <div class="form__group">
                         <label class="form__header" for="new_clock_in">出勤・退勤</label>
                         <div class="form__input-group">
-                            <input class="form__input" id="new_clock_in" type="text" name="new_clock_in" value="{{ $data['clock_in'] }}">
+                            {{-- ▼ old() を追加して入力値を保持 --}}
+                            <input class="form__input" id="new_clock_in" type="text" name="new_clock_in" value="{{ old('new_clock_in', $data['clock_in']) }}">
                             <p>〜</p>
-                            <input class="form__input" type="text" name="new_clock_out" value="{{ $data['clock_out'] }}">
+                            <input class="form__input" type="text" name="new_clock_out" value="{{ old('new_clock_out', $data['clock_out']) }}">
                         </div>
                     </div>
 
@@ -49,14 +49,38 @@
                         </div>
                     </div>
 
-                    {{-- 休憩は「休憩」「休憩2」…とセクション分け表示。エラーは各行の入力欄の直下に個別表示する --}}
-                    @foreach($data['breaks'] as $index => $break)
+                    {{-- ▼ 休憩：old入力とDBデータを考慮してループ描画 --}}
+                    @php
+                        $oldBreakIns = old('new_break_in');
+                        $oldBreakOuts = old('new_break_out');
+                        
+                        $dbBreaks = (isset($data['breaks']) && is_array($data['breaks']))
+                            ? $data['breaks'] : [];
+
+                        // oldデータがある場合はその数、なければDBの数 + 1行（新規追加用空き欄）を確保
+                        if (!is_null($oldBreakIns)) {
+                            $loopCount = count($oldBreakIns);
+                        } else {
+                            $loopCount = count($dbBreaks) + 1;
+                        }
+                    @endphp
+
+                    @for($index = 0; $index < $loopCount; $index++)
+                        @php
+                            if (!is_null($oldBreakIns)) {
+                                $breakInVal = $oldBreakIns[$index] ?? '';
+                                $breakOutVal = $oldBreakOuts[$index] ?? '';
+                            } else {
+                                $breakInVal = $dbBreaks[$index]['break_in'] ?? '';
+                                $breakOutVal = $dbBreaks[$index]['break_out'] ?? '';
+                            }
+                        @endphp
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
                             <div class="form__input-group">
-                                <input class="form__input" type="text" name="new_break_in[{{ $index }}]" value="{{ $break['break_in'] }}">
+                                <input class="form__input" type="text" name="new_break_in[{{ $index }}]" value="{{ $breakInVal }}">
                                 <p>〜</p>
-                                <input class="form__input" type="text" name="new_break_out[{{ $index }}]" value="{{ $break['break_out'] }}">
+                                <input class="form__input" type="text" name="new_break_out[{{ $index }}]" value="{{ $breakOutVal }}">
                             </div>
                         </div>
                         <div class="error-message">
@@ -66,29 +90,13 @@
                                 @error('new_break_out.' . $index)<p>{{ $message }}</p>@enderror
                             </div>
                         </div>
-                    @endforeach
-                    {{-- 新しい休憩を追加できるよう末尾に空欄を1つ用意 --}}
-                    @php $newBreakIndex = count($data['breaks']); @endphp
-                    <div class="form__group">
-                        <label class="form__header">{{ $newBreakIndex === 0 ? '休憩' : '休憩' . ($newBreakIndex + 1) }}</label>
-                        <div class="form__input-group">
-                            <input class="form__input" type="text" name="new_break_in[{{ $newBreakIndex }}]" value="">
-                            <p>〜</p>
-                            <input class="form__input" type="text" name="new_break_out[{{ $newBreakIndex }}]" value="">
-                        </div>
-                    </div>
-                    <div class="error-message">
-                        <div></div>
-                        <div class="error-message__item">
-                            @error('new_break_in.' . $newBreakIndex)<p>{{ $message }}</p>@enderror
-                            @error('new_break_out.' . $newBreakIndex)<p>{{ $message }}</p>@enderror
-                        </div>
-                    </div>
+                    @endfor
 
                     <div class="form__group">
                         <label class="form__header" for="comment">備考</label>
                         <div class="form__input-group">
-                            <input class="form__textarea" id="comment" name="comment" value="{{ $data['comment'] }}">
+                            {{-- ▼ 備考欄も old() で保持（inputタグになっているためそのまま適用） --}}
+                            <input class="form__textarea" id="comment" name="comment" value="{{ old('comment', $data['comment']) }}">
                         </div>
                     </div>
 
@@ -110,8 +118,7 @@
                     <div class="form__group">
                         <label class="form__header">名前</label>
                         <div class="form__input-group">
-                            <input class="form__input form__input--name readonly" type="text" value="{{ $user->name }}"
-                                readonly>
+                            <input class="form__input form__input--name readonly" type="text" value="{{ $user->name }}" readonly>
                         </div>
                     </div>
 
@@ -132,16 +139,13 @@
                         </div>
                     </div>
 
-                    {{-- 休憩は「休憩」「休憩2」「休憩3」…とセクションを分けて表示 --}}
                     @foreach($data['breaks'] as $index => $break)
                         <div class="form__group">
                             <label class="form__header">{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}</label>
                             <div class="form__input-group">
-                                <input class="form__input readonly" type="text" name="new_break_in[]"
-                                    value="{{ $break['break_in'] }}" readonly>
+                                <input class="form__input readonly" type="text" value="{{ $break['break_in'] }}" readonly>
                                 <p>〜</p>
-                                <input class="form__input readonly" type="text" name="new_break_out[]"
-                                    value="{{ $break['break_out'] }}" readonly>
+                                <input class="form__input readonly" type="text" value="{{ $break['break_out'] }}" readonly>
                             </div>
                         </div>
                     @endforeach
@@ -149,14 +153,13 @@
                     <div class="form__group">
                         <label class="form__header">備考</label>
                         <div class="form__input-group">
-                            <input class="form__textarea readonly" name="comment" value="{{ $data['comment'] }}"
-                                readonly></input>
+                            <textarea class="form__textarea readonly" name="comment" readonly>{{ $data['comment'] }}</textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="form__button">
-                    <p class="readonly-message">承認待ちのため修正できません</p>
+                    <p class="readonly-message">承認待ちのため修正できません。</p>
                 </div>
             @endif
 

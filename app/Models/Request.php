@@ -10,9 +10,9 @@ class Request extends Model
 {
     use HasFactory;
 
-    // ステータス用の定数定義（false: 未申請, true: 申請済み）
-    const STATUS_UNAPPLIED = false;  // 未申請（「修正」ボタン表示）
-    const STATUS_PENDING = true;     // 申請済み / 承認待ち（修正不可）
+    // ステータス用の定数定義（0:false: , 1:true: ）
+    const STATUS_UNAPPLIED = false;  // 未申請/申請なし（「修正」ボタン表示）
+    const STATUS_PENDING = true;     // 申請済み / 承認待ち（修正不可メッセージ表示）
 
     protected $fillable = [
         'attendance_id',
