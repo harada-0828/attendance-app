@@ -19,7 +19,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'email_verified_at', 
+        'email_verified_at',
         'password',
         'admin_status',
     ];
@@ -41,17 +41,27 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime', 
+            'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'admin_status' => 'boolean',     
+            'admin_status' => 'boolean',
         ];
     }
 
+    /**
+     * ユーザーに紐づく勤怠レコード一覧を取得する。
+     *
+     * @return HasMany<Attendance, $this>
+     */
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
 
+    /**
+     * ユーザーに紐づく修正申請一覧を取得する。
+     *
+     * @return HasMany<Request, $this>
+     */
     public function requests(): HasMany
     {
         return $this->hasMany(Request::class);

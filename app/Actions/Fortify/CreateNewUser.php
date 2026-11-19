@@ -14,15 +14,15 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * 新規ユーザーの入力値をバリデーションし、ユーザーを作成する。
      *
      * @param  array<string, string>  $input
+     * @return User
      *
      * @throws ValidationException
      */
     public function create(array $input): User
     {
-        // 第3引数のカスタムメッセージは lang/ja/validation.php 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [

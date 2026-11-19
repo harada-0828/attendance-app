@@ -3,21 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
     /**
-     * 管理者用の登録済みスタッフ一覧を表示
+     * 管理者用の登録済み一般スタッフ一覧画面を表示する（管理者は除外）。
+     *
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         $user = Auth::user();
-        
-        // ▼ 管理者（admin_status = 1）を除外して一般スタッフのみ取得
-        $users = User::where('admin_status', '!=', 1)->get();
+
+        /** @var Collection<int, User> $users */
+        $users = User::query()
+            ->where(function ($query): void {
+                $query->where('admin_status', false)
+                    ->orWhereNull('admin_status');
+            })
+            ->get();
 
         return view('admin.staff-list', compact('users', 'user'));
     }
