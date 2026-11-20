@@ -6,28 +6,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
         'name',
         'email',
-        'email_verified_at', // 追加
+        'email_verified_at',
         'password',
         'admin_status',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * @var array<string, string>
      */
     protected $hidden = [
         'password',
@@ -41,17 +38,37 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime', // 追加: 日付型へキャスト
+            'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'admin_status' => 'boolean',     
+            'admin_status' => 'boolean',
         ];
     }
 
+    /**
+     * ユーザーに紐づく勤怠レコード一覧を取得する。
+     *
+     * @return HasMany<Attendance, $this>
+     */
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
 
+    /**
+     * API仕様向けにユーザーに紐づく勤怠レコード一覧を取得する。
+     *
+     * @return HasMany<AttendanceRecord, $this>
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
+     * ユーザーに紐づく修正申請一覧を取得する。
+     *
+     * @return HasMany<Request, $this>
+     */
     public function requests(): HasMany
     {
         return $this->hasMany(Request::class);
