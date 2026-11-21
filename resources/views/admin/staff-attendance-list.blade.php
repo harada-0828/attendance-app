@@ -7,7 +7,7 @@
 @section('content')
 <div class="attendance-list__content">
     <div class="content__header">
-        <h1 class="content__header--item">{{ $user->name }}さんの勤怠</h1>
+        <h1 class="content__header--item">{{ $targetUser->name }}さんの勤怠</h1>
     </div>
     <div class="content__menu">
         <a class="previous-month" href="?date={{ $previousMonth }}">前月</a>
@@ -47,14 +47,17 @@
                 <p class="table__description--item">{{ $attendanceRecords['clock_out'] }}</p>
             </td>
             <td class="table__description">
-                <p class="table__description--item">{{ $attendanceRecords['total_break_time'] ? \Carbon\Carbon::parse($attendanceRecords['total_break_time'])->format('G:i') : '' }}</p>
+                {{-- コントローラー側で整型済みの文字列をそのまま表示 --}}
+                <p class="table__description--item">{{ $attendanceRecords['total_break_time'] }}</p>
             </td>
             <td class="table__description">
-                <p class="table__description--item">{{ $attendanceRecords['total_time'] ? \Carbon\Carbon::parse($attendanceRecords['total_time'])->format('G:i') : '' }}</p>
+                {{-- コントローラー側で整型済みの文字列をそのまま表示 --}}
+                <p class="table__description--item">{{ $attendanceRecords['total_time'] }}</p>
             </td>
             <td class="table__description">
                 @if (!empty($attendanceRecords['id']))
-                <a class="table__item--detail-link" href="{{ url('/attendance/' . $attendanceRecords['id']) }}">詳細</a>
+                {{-- ★ 管理者用の詳細画面ルート（/admin/attendance/{id}）に変更 --}}
+                <a class="table__item--detail-link" href="{{ url('/admin/attendance/' . $attendanceRecords['id']) }}">詳細</a>
                 @endif
             </td>
         </tr>
@@ -63,7 +66,7 @@
     <div class="csv-button">
         <form action="/export" method="post">
         @csrf
-            <input type="hidden" name="user_id" value="{{ $user->id }}">
+            <input type="hidden" name="user_id" value="{{ $targetUser->id }}">
             <input type="hidden" name="year_month" value="{{ $date->format('Y-m') }}">
             <input class="csv-button__submit" type="submit" value="CSV出力">
         </form>

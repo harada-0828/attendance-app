@@ -2,113 +2,144 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAttendanceRequest extends FormRequest
 {
+    /**
+     * リクエストの認可判定を行う。
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * バリデーション実行前に、'9:00' や '09:00' などの時刻形式を自動で '09:00' (H:i) に整形する
+     * バリデーション実行前に、出退勤・休憩の時刻文字列を「H:i」形式へ正規化する。
+     *
+     * @return void
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
-        $formatTime = function ($time) {
-            if (empty($time) || $time === 'null') return $time;
+        $formatTime = static function (mixed $time): mixed {
+            if (!is_string($time) || $time === '' || $time === 'null') {
+                return $time;
+            }
+
             try {
                 return Carbon::parse($time)->format('H:i');
-            } catch (\Exception $e) {
+            } catch (\Throwable) {
                 return $time;
             }
         };
 
-        // 出退勤時間の整形
         $this->merge([
-            'new_clock_in'  => $formatTime($this->input('new_clock_in')),
+            'new_clock_in' => $formatTime($this->input('new_clock_in')),
             'new_clock_out' => $formatTime($this->input('new_clock_out')),
         ]);
 
-        // 休憩時間の整形（配列対応）
         if ($this->has('new_break_in')) {
-            $breakIns = array_map($formatTime, $this->input('new_break_in', []));
+            $breakIns = collect($this->input('new_break_in', []))
+                ->map($formatTime)
+                ->all();
+
             $this->merge(['new_break_in' => $breakIns]);
         }
 
         if ($this->has('new_break_out')) {
-            $breakOuts = array_map($formatTime, $this->input('new_break_out', []));
+            $breakOuts = collect($this->input('new_break_out', []))
+                ->map($formatTime)
+                ->all();
+
             $this->merge(['new_break_out' => $breakOuts]);
         }
     }
 
+    /**
+     * 入力値に対するバリデーションルールを取得する。
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
-            'new_clock_in'   => ['required', 'date_format:H:i'],
-            'new_clock_out'  => ['required', 'date_format:H:i', 'after:new_clock_in'],
-            
+            'new_clock_in' => ['required', 'date_format:H:i'],
+            'new_clock_out' => ['required', 'date_format:H:i', 'after:new_clock_in'],
             'new_break_in.*' => ['nullable', 'date_format:H:i', 'after_or_equal:new_clock_in', 'before:new_clock_out'],
-            
-            'new_break_out.*'=> [
-                'nullable', 
-                'date_format:H:i', 
-                'after:new_break_in.*', 
+            'new_break_out.*' => [
+                'nullable',
+                'date_format:H:i',
+                'after:new_break_in.*',
                 'before_or_equal:new_clock_out',
-                // ▼ 複数の休憩行同士の時間重複（バッティング）を検知して弾くカスタムルール
-                function ($attribute, $value, $fail) {
-                    $breakIns = $this->input('new_break_in', []);
-                    $breakOuts = $this->input('new_break_out', []);
-                    
-                    $intervals = [];
-                    foreach ($breakIns as $i => $in) {
-                        $out = $breakOuts[$i] ?? null;
-                        if (!empty($in) && $in !== 'null' && !empty($out) && $out !== 'null') {
-                            $intervals[] = ['start' => $in, 'end' => $out];
-                        }
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (empty($value) || !is_string($value)) {
+                        return;
                     }
 
-                    // 休憩期間同士が重なっていないか総当たりでチェック
-                    for ($i = 0; $i < count($intervals); $i++) {
-                        for ($j = $i + 1; $j < count($intervals); $j++) {
-                            $b1 = $intervals[$i];
-                            $b2 = $intervals[$j];
+                    $breakIns = $this->input('new_break_in', []);
+                    $breakOuts = $this->input('new_break_out', []);
 
-                            if ($b1['start'] < $b2['end'] && $b2['start'] < $b1['end']) {
-                                $fail('休憩時間が重複しています');
-                                return;
+                    $intervals = collect($breakIns)
+                        ->map(function (mixed $in, int|string $i) use ($breakOuts): ?array {
+                            $out = $breakOuts[$i] ?? null;
+
+                            if (
+                                empty($in) || $in === 'null' || !is_string($in)
+                                || empty($out) || $out === 'null' || !is_string($out)
+                            ) {
+                                return null;
                             }
-                        }
+
+                            return [
+                                'start' => $in,
+                                'end' => $out,
+                            ];
+                        })
+                        ->filter()
+                        ->values();
+
+                    $hasOverlap = $intervals->search(function (array $b1, int $i) use ($intervals): bool {
+                        return $intervals
+                            ->slice($i + 1)
+                            ->contains(
+                                fn (array $b2): bool => $b1['start'] < $b2['end'] && $b2['start'] < $b1['end']
+                            );
+                    }) !== false;
+
+                    if ($hasOverlap) {
+                        $fail('休憩時間が重複しています');
                     }
                 },
             ],
-            
-            'comment'        => ['required', 'string', 'max:255'],
+            'comment' => ['required', 'string', 'max:255'],
         ];
     }
 
+    /**
+     * バリデーションエラーメッセージを取得する。
+     *
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [
-            'new_clock_in.required'          => '出勤時間を入力してください',
-            'new_clock_in.date_format'       => '出勤時間は「時:分」の形式で入力してください',
-            
-            'new_clock_out.required'         => '退勤時間を入力してください',
-            'new_clock_out.date_format'      => '退勤時間は「時:分」の形式で入力してください',
-            'new_clock_out.after'            => '出勤時間もしくは退勤時間が不適切な値です',
-            
-            'new_break_in.*.date_format'     => '休憩時間が不適切な値です',
-            'new_break_in.*.after_or_equal'  => '休憩時間が不適切な値です',
-            'new_break_in.*.before'          => '休憩時間が不適切な値です',
-            
-            'new_break_out.*.date_format'    => '休憩時間が不適切な値です',
-            'new_break_out.*.after'          => '休憩時間が不適切な値です',
-            'new_break_out.*.before_or_equal'=> '休憩時間もしくは退勤時間が不適切な値です',
-            
-            'comment.required'               => '備考を記入してください',
-            'comment.max'                    => '備考は255文字以内で入力してください',
+            'new_clock_in.required' => '出勤時間を入力してください',
+            'new_clock_in.date_format' => '出勤時間は「時:分」の形式で入力してください',
+            'new_clock_out.required' => '退勤時間を入力してください',
+            'new_clock_out.date_format' => '退勤時間は「時:分」の形式で入力してください',
+            'new_clock_out.after' => '出勤時間もしくは退勤時間が不適切な値です',
+            'new_break_in.*.date_format' => '休憩時間が不適切な値です',
+            'new_break_in.*.after_or_equal' => '休憩時間が不適切な値です',
+            'new_break_in.*.before' => '休憩時間が不適切な値です',
+            'new_break_out.*.date_format' => '休憩時間が不適切な値です',
+            'new_break_out.*.after' => '休憩時間が不適切な値です',
+            'new_break_out.*.before_or_equal' => '休憩時間もしくは退勤時間が不適切な値です',
+            'comment.required' => '備考を記入してください',
+            'comment.max' => '備考は255文字以内で入力してください',
         ];
     }
 }

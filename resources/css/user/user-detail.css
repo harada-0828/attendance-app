@@ -79,7 +79,15 @@
     resize: none;
 }
 
-.form__input--name,
+/* 名前が見切れないよう幅と左揃えを指定（.form__input の 80px 幅を上書き） */
+.form__input--name {
+    border: none;
+    outline: none;
+    width: 100%;
+    max-width: 260px;
+    text-align: left;
+}
+
 .form__input--date {
     border: none;
     outline: none;
