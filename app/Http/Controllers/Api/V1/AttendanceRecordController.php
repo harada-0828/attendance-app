@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\IndexAttendanceRecordRequest;
 use App\Http\Requests\Api\V1\StoreAttendanceRecordRequest;
 use App\Http\Requests\Api\V1\UpdateAttendanceRecordRequest;
-use App\Http\Resources\Api\V1\AttendanceRecordResource;
+use App\Http\Resources\AttendanceRecordResource;
 use App\Models\AttendanceRecord;
 use App\Models\Request as AttendanceRequest;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AttendanceRecordController extends Controller
 {
@@ -27,7 +29,6 @@ class AttendanceRecordController extends Controller
         $validated = $request->validated();
 
         $query = AttendanceRecord::query()
-            ->with('user')
             ->orderByDesc('date')
             ->orderByDesc('id');
 
@@ -38,11 +39,13 @@ class AttendanceRecordController extends Controller
         if (!empty($validated['date'])) {
             $query->whereDate('date', $validated['date']);
         }
-
-        if (!empty($validated['month'])) {
-            [$year, $month] = explode('-', (string) $validated['month']);
-            $query->whereYear('date', (int) $year)
-                ->whereMonth('date', (int) $month);
+if (!empty($validated['month'])) {
+            $parts = explode('-', (string) $validated['month']);
+            if (count($parts) === 2) {
+                [$year, $month] = $parts;
+                $query->whereYear('date', (int) $year)
+                    ->whereMonth('date', (int) $month);
+            }
         }
 
         $perPage = (int) ($validated['per_page'] ?? 20);
@@ -89,6 +92,7 @@ class AttendanceRecordController extends Controller
 
         /** @var AttendanceRecord $record */
         $record = DB::transaction(function () use ($validated, $targetUserId, $date, $clockIn, $clockOut, $authUser): AttendanceRecord {
+            // attendances テーブルには comment カラムがないため、勤怠本体と修正申請（requests.reason）を分けて保存する
             $created = AttendanceRecord::create([
                 'user_id' => $targetUserId,
                 'date' => $date,
@@ -103,7 +107,7 @@ class AttendanceRecordController extends Controller
                     'requested_clock_in' => $clockIn ?? "{$date} 00:00:00",
                     'requested_clock_out' => $clockOut ?? "{$date} 00:00:00",
                     'reason' => (string) $validated['comment'],
-                    'approval_status' => false,
+                    'approval_status' => true,
                 ]);
             }
 
@@ -123,6 +127,8 @@ class AttendanceRecordController extends Controller
      * @param  UpdateAttendanceRecordRequest  $request
      * @param  AttendanceRecord  $attendanceRecord
      * @return AttendanceRecordResource
+     *
+     * @throws ValidationException
      */
     public function update(UpdateAttendanceRecordRequest $request, AttendanceRecord $attendanceRecord): AttendanceRecordResource
     {
@@ -132,6 +138,27 @@ class AttendanceRecordController extends Controller
         $authUser = $request->user();
 
         $date = $validated['date'] ?? optional($attendanceRecord->date)->format('Y-m-d');
+
+        // 比較用の出勤・退勤日時を組み立てる（部分更新時は既存値をフォールバックに使う）
+        $effectiveClockInStr = array_key_exists('clock_in', $validated)
+            ? ($validated['clock_in'] ? "{$date} {$validated['clock_in']}" : null)
+            : optional($attendanceRecord->clock_in)->format('Y-m-d H:i:s');
+
+        $effectiveClockOutStr = array_key_exists('clock_out', $validated)
+            ? ($validated['clock_out'] ? "{$date} {$validated['clock_out']}" : null)
+            : optional($attendanceRecord->clock_out)->format('Y-m-d H:i:s');
+
+        if ($effectiveClockInStr && $effectiveClockOutStr) {
+            $clockInCarbon = Carbon::parse($effectiveClockInStr);
+            $clockOutCarbon = Carbon::parse($effectiveClockOutStr);
+
+            if ($clockOutCarbon->lessThanOrEqualTo($clockInCarbon)) {
+                throw ValidationException::withMessages([
+                    'clock_out' => ['退勤時刻は出勤時刻より後の時刻を指定してください。'],
+                ]);
+            }
+        }
+
         $updateData = [];
 
         if (array_key_exists('date', $validated)) {
@@ -154,26 +181,19 @@ class AttendanceRecordController extends Controller
             $updateData['user_id'] = (int) $validated['user_id'];
         }
 
-        DB::transaction(function () use ($attendanceRecord, $updateData, $validated, $authUser, $date): void {
+        DB::transaction(function () use ($attendanceRecord, $updateData, $validated, $authUser, $date, $effectiveClockInStr, $effectiveClockOutStr): void {
             if (!empty($updateData)) {
                 $attendanceRecord->update($updateData);
             }
 
             if (array_key_exists('comment', $validated) && !empty($validated['comment'])) {
-                $clockInStr = $attendanceRecord->clock_in
-                    ? $attendanceRecord->clock_in->format('Y-m-d H:i:s')
-                    : "{$date} 00:00:00";
-                $clockOutStr = $attendanceRecord->clock_out
-                    ? $attendanceRecord->clock_out->format('Y-m-d H:i:s')
-                    : "{$date} 00:00:00";
-
                 AttendanceRequest::create([
                     'attendance_id' => $attendanceRecord->id,
                     'user_id' => $authUser?->id ?? $attendanceRecord->user_id,
-                    'requested_clock_in' => $clockInStr,
-                    'requested_clock_out' => $clockOutStr,
+                    'requested_clock_in' => $effectiveClockInStr ?? "{$date} 00:00:00",
+                    'requested_clock_out' => $effectiveClockOutStr ?? "{$date} 00:00:00",
                     'reason' => (string) $validated['comment'],
-                    'approval_status' => false,
+                    'approval_status' => true,
                 ]);
             }
         });

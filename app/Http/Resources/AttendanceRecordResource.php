@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Http\Resources\Api\V1;
+namespace App\Http\Resources;
 
+use App\Http\Resources\Api\V1\ApplicationResource;
+use App\Http\Resources\Api\V1\AttendanceBreakResource;
+use App\Http\Resources\Api\V1\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,8 +21,8 @@ class AttendanceRecordResource extends JsonResource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'user_name' => $this->when(!$this->relationLoaded('user'), fn () => $this->user?->name),
-            'user' => new UserResource($this->whenLoaded('user')),'date' => optional($this->date)->format('Y-m-d'),
+            'user' => $this->when($this->relationLoaded('user'), fn () => new UserResource($this->user)),
+            'date' => optional($this->date)->format('Y-m-d'),
             'clock_in' => optional($this->clock_in)->format('H:i:s'),
             'clock_out' => optional($this->clock_out)->format('H:i:s'),
             'total_time' => $this->total_time,
