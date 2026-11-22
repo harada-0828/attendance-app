@@ -14,20 +14,26 @@ Route::get('/admin/login', function () {
     return view('admin.admin-login');
 })->middleware('guest')->name('admin.login');
 
-// 認証済みユーザー用ルート
-Route::middleware('auth')->group(function () {
+// 認証済みユーザー用ルート（メール認証必須の一般ユーザー機能）
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'create'])->name('attendance.create');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     Route::get('/attendance/list', [AttendanceController::class, 'index'])->name('attendance.list');
     Route::get('/attendance/detail/{id}', [RequestController::class, 'show'])->name('attendance.detail');
     Route::post('/attendance/detail/{id}', [RequestController::class, 'store'])->name('attendance.update');
+});
 
-    // 申請一覧（一般・管理者で切り替え）
+// ログアウト・申請一覧（メール認証待ちユーザーでもログアウトできるように分離）
+Route::middleware('auth')->group(function () {
     Route::get('/stamp_correction_request/list', function (Request $request) {
         $user = Auth::user();
 
         if ($user && $user->admin_status) {
             return app(AdminRequestController::class)->index();
+        }
+
+        if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
         }
 
         return app(RequestController::class)->index();
