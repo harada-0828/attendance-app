@@ -29,6 +29,7 @@ class AttendanceRecordController extends Controller
         $validated = $request->validated();
 
         $query = AttendanceRecord::query()
+            ->with(['user', 'breaks', 'applications'])
             ->orderByDesc('date')
             ->orderByDesc('id');
 
@@ -39,7 +40,8 @@ class AttendanceRecordController extends Controller
         if (!empty($validated['date'])) {
             $query->whereDate('date', $validated['date']);
         }
-if (!empty($validated['month'])) {
+
+        if (!empty($validated['month'])) {
             $parts = explode('-', (string) $validated['month']);
             if (count($parts) === 2) {
                 [$year, $month] = $parts;

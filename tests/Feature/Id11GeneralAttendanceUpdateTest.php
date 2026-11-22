@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -48,6 +49,25 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
                  'comment' => '電車遅延のため',
              ])
              ->assertSee('出勤時間もしくは退勤時間が不適切な値です', false);
+    }
+
+    /** @test */
+    public function 休憩開始時間が出勤時間より前の場合エラーメッセージが表示される()
+    {
+        [$user, $attendance] = $this->createUserAndAttendance();
+        $url = '/attendance/detail/' . $attendance->id;
+
+        $this->actingAs($user)
+             ->followingRedirects()
+             ->from($url)
+             ->post($url, [
+                 'new_clock_in' => '09:00',
+                 'new_clock_out' => '18:00',
+                 'new_break_in' => ['08:30'],
+                 'new_break_out' => ['09:30'],
+                 'comment' => '休憩開始時刻の修正',
+             ])
+             ->assertSee('休憩時間が不適切な値です', false);
     }
 
     /** @test */
@@ -123,6 +143,7 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
             'attendance_id' => $attendance->id,
             'user_id' => $user->id,
             'reason' => '打刻漏れ修正申請',
+            'approval_status' => true,
         ]);
 
         $this->actingAs($user)
@@ -137,7 +158,7 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
         [$user, $attendance] = $this->createUserAndAttendance();
 
         if (Schema::hasTable('requests')) {
-            \DB::table('requests')->insert([
+            DB::table('requests')->insert([
                 'attendance_id' => $attendance->id,
                 'user_id' => $user->id,
                 'requested_clock_in' => '2026-11-10 09:30:00',
