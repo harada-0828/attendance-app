@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/attendance/staff/{id}', [AdminAttendanceController::class, 'showStaffMonthly'])->name('admin.attendance.staff');
     Route::get('/admin/attendance/{id}', [AdminAttendanceController::class, 'show'])->name('admin.attendance.detail');
     Route::post('/admin/attendance/{id}', [AdminAttendanceController::class, 'store'])->name('admin.attendance.update');
+    Route::post('/export', [AdminAttendanceController::class, 'exportCsv'])->name('admin.attendance.export');
 
     Route::post('/admin/logout', function (Request $request) {
         Auth::guard('admin')->logout();

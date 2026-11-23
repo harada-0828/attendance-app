@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
@@ -59,6 +60,42 @@ class AttendanceController extends Controller
             'total_break_time' => $totalBreakTime,
             'total_time' => $totalTime,
         ];
+    }
+
+    /**
+     * 指定ユーザー・指定月の勤怠一覧データを取得・整形する。
+     *
+     * @param  int|string  $userId
+     * @param  Carbon  $targetMonth
+     * @return Collection<int, array{id: int, date: string, clock_in: string, clock_out: string, total_break_time: ?string, total_time: ?string}>
+     */
+    private function buildMonthlyAttendanceRows(int|string $userId, Carbon $targetMonth): Collection
+    {
+        $startOfMonth = $targetMonth->copy()->startOfMonth();
+        $endOfMonth = $targetMonth->copy()->endOfMonth();
+        $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+        /** @var Collection<int, Attendance> $attendances */
+        $attendances = Attendance::query()
+            ->with('rests')
+            ->where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->orderBy('date', 'asc')
+            ->get();
+
+        return $attendances->map(function (Attendance $attendance) use ($weekdays): array {
+            $durations = $this->calculateAttendanceDurations($attendance);
+            $parsedDate = Carbon::parse($attendance->date);
+
+            return [
+                'id' => $attendance->id,
+                'date' => $parsedDate->format('n月j日') . '（' . $weekdays[$parsedDate->dayOfWeek] . '）',
+                'clock_in' => $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : '',
+                'clock_out' => $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : '',
+                'total_break_time' => $durations['total_break_time'] !== '' ? $durations['total_break_time'] : null,
+                'total_time' => $durations['total_time'] !== '' ? $durations['total_time'] : null,
+            ];
+        });
     }
 
     /**
@@ -146,33 +183,7 @@ class AttendanceController extends Controller
         $previousMonth = $date->copy()->subMonth()->format('Y-m-d');
         $nextMonth = $date->copy()->addMonth()->format('Y-m-d');
 
-        $startOfMonth = $date->copy()->startOfMonth();
-        $endOfMonth = $date->copy()->endOfMonth();
-
-        $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-
-        /** @var Collection<int, Attendance> $attendances */
-        $attendances = Attendance::query()
-            ->with('rests')
-            ->where('user_id', $id)
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
-            ->orderBy('date', 'asc')
-            ->get();
-
-        /** @var Collection<int, array<string, mixed>> $formattedAttendanceRecords */
-        $formattedAttendanceRecords = $attendances->map(function (Attendance $attendance) use ($weekdays): array {
-            $durations = $this->calculateAttendanceDurations($attendance);
-            $parsedDate = Carbon::parse($attendance->date);
-
-            return [
-                'id' => $attendance->id,
-                'date' => $parsedDate->format('n月j日') . '（' . $weekdays[$parsedDate->dayOfWeek] . '）',
-                'clock_in' => $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : '',
-                'clock_out' => $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : '',
-                'total_break_time' => $durations['total_break_time'] !== '' ? $durations['total_break_time'] : null,
-                'total_time' => $durations['total_time'] !== '' ? $durations['total_time'] : null,
-            ];
-        });
+        $formattedAttendanceRecords = $this->buildMonthlyAttendanceRows($id, $date);
 
         return view('admin.staff-attendance-list', compact(
             'user',
@@ -182,6 +193,55 @@ class AttendanceController extends Controller
             'nextMonth',
             'formattedAttendanceRecords'
         ));
+    }
+
+    /**
+     * 指定ユーザー・指定月の勤怠一覧を CSV 形式でダウンロードさせる。
+     *
+     * @param  Request  $request
+     * @return StreamedResponse
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'year_month' => ['required', 'date_format:Y-m'],
+        ]);
+
+        /** @var User $targetUser */
+        $targetUser = User::findOrFail($validated['user_id']);
+        $targetMonth = Carbon::createFromFormat('Y-m', $validated['year_month'])->startOfMonth();
+        $rows = $this->buildMonthlyAttendanceRows($targetUser->id, $targetMonth);
+
+        $fileName = sprintf(
+            'attendance_user%d_%s.csv',
+            $targetUser->id,
+            $targetMonth->format('Y-m')
+        );
+
+        return response()->streamDownload(function () use ($rows): void {
+            $handle = fopen('php://output', 'w');
+            if ($handle === false) {
+                return;
+            }
+
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, ['日付', '出勤', '退勤', '休憩', '合計']);
+
+            foreach ($rows as $row) {
+                fputcsv($handle, [
+                    $row['date'],
+                    $row['clock_in'],
+                    $row['clock_out'],
+                    $row['total_break_time'] ?? '',
+                    $row['total_time'] ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     /**
