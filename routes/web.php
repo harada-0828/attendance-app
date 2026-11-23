@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\RequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance/list', [AttendanceController::class, 'index'])->name('attendance.list');
     Route::get('/attendance/detail/{id}', [RequestController::class, 'show'])->name('attendance.detail');
     Route::post('/attendance/detail/{id}', [RequestController::class, 'store'])->name('attendance.update');
+    Route::get('/attendance/report', [AttendanceReportController::class, 'index'])->name('attendance.report');
 });
 
 // ログアウト・申請一覧（メール認証待ちユーザーでもログアウトできるように分離）

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +56,48 @@ class Attendance extends Model
         }
 
         return '勤務外';
+    }
+
+    /**
+     * 完了済みの休憩時間の合計（分）を算出して返す。
+     *
+     * @return int
+     */
+    public function getTotalBreakMinutesAttribute(): int
+    {
+        $rests = $this->relationLoaded('rests')
+            ? $this->rests
+            : $this->rests()->get();
+
+        /** @var int $totalMinutes */
+        $totalMinutes = $rests
+            ->filter(fn (Rest $rest): bool => $rest->break_start !== null && $rest->break_end !== null)
+            ->sum(function (Rest $rest): int {
+                $start = Carbon::parse($rest->break_start);
+                $end = Carbon::parse($rest->break_end);
+
+                return max(0, (int) $start->diffInMinutes($end));
+            });
+
+        return $totalMinutes;
+    }
+
+    /**
+     * 1日の実働時間（分）を算出して返す。
+     *
+     * @return int
+     */
+    public function getWorkMinutesAttribute(): int
+    {
+        if ($this->clock_in === null || $this->clock_out === null) {
+            return 0;
+        }
+
+        $clockIn = Carbon::parse($this->clock_in);
+        $clockOut = Carbon::parse($this->clock_out);
+        $stayMinutes = max(0, (int) $clockIn->diffInMinutes($clockOut));
+
+        return max(0, $stayMinutes - $this->total_break_minutes);
     }
 
     /**
