@@ -21,12 +21,11 @@ class AttendanceController extends Controller
     /**
      * 勤怠レコードから合計休憩時間と実働合計時間を算出する。
      *
-     * @param  Attendance|null  $attendance
      * @return array{total_break_time: string, total_time: string}
      */
     private function calculateAttendanceDurations(?Attendance $attendance): array
     {
-        if (!$attendance) {
+        if (! $attendance) {
             return [
                 'total_break_time' => '',
                 'total_time' => '',
@@ -65,8 +64,6 @@ class AttendanceController extends Controller
     /**
      * 指定ユーザー・指定月の勤怠一覧データを取得・整形する。
      *
-     * @param  int|string  $userId
-     * @param  Carbon  $targetMonth
      * @return Collection<int, array{id: int, date: string, clock_in: string, clock_out: string, total_break_time: ?string, total_time: ?string}>
      */
     private function buildMonthlyAttendanceRows(int|string $userId, Carbon $targetMonth): Collection
@@ -89,7 +86,7 @@ class AttendanceController extends Controller
 
             return [
                 'id' => $attendance->id,
-                'date' => $parsedDate->format('n月j日') . '（' . $weekdays[$parsedDate->dayOfWeek] . '）',
+                'date' => $parsedDate->format('n月j日').'（'.$weekdays[$parsedDate->dayOfWeek].'）',
                 'clock_in' => $attendance->clock_in ? Carbon::parse($attendance->clock_in)->format('H:i') : '',
                 'clock_out' => $attendance->clock_out ? Carbon::parse($attendance->clock_out)->format('H:i') : '',
                 'total_break_time' => $durations['total_break_time'] !== '' ? $durations['total_break_time'] : null,
@@ -100,9 +97,6 @@ class AttendanceController extends Controller
 
     /**
      * 管理者用の日次勤怠一覧画面を表示する（管理者は除外）。
-     *
-     * @param  Request  $request
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -167,10 +161,6 @@ class AttendanceController extends Controller
 
     /**
      * 管理者用のスタッフ別月次勤怠一覧画面を表示する。
-     *
-     * @param  Request  $request
-     * @param  int|string  $id
-     * @return View
      */
     public function showStaffMonthly(Request $request, int|string $id): View
     {
@@ -197,9 +187,6 @@ class AttendanceController extends Controller
 
     /**
      * 指定ユーザー・指定月の勤怠一覧を CSV 形式でダウンロードさせる。
-     *
-     * @param  Request  $request
-     * @return StreamedResponse
      */
     public function exportCsv(Request $request): StreamedResponse
     {
@@ -246,9 +233,6 @@ class AttendanceController extends Controller
 
     /**
      * 管理者用の勤怠詳細画面を表示する。
-     *
-     * @param  int|string  $id
-     * @return View
      */
     public function show(int|string $id): View
     {
@@ -288,10 +272,6 @@ class AttendanceController extends Controller
 
     /**
      * 管理者による直接の出退勤・休憩時間修正を保存し、日次勤怠一覧へリダイレクトする。
-     *
-     * @param  AdminUpdateAttendanceRequest  $request
-     * @param  int|string  $id
-     * @return RedirectResponse
      */
     public function store(AdminUpdateAttendanceRequest $request, int|string $id): RedirectResponse
     {
@@ -313,11 +293,11 @@ class AttendanceController extends Controller
         $clockInInput = $request->input('new_clock_in');
         $clockOutInput = $request->input('new_clock_out');
 
-        $clockIn = (!empty($clockInInput) && $clockInInput !== 'null')
+        $clockIn = (! empty($clockInInput) && $clockInInput !== 'null')
             ? "{$attendanceDate} {$clockInInput}:00"
             : null;
 
-        $clockOut = (!empty($clockOutInput) && $clockOutInput !== 'null')
+        $clockOut = (! empty($clockOutInput) && $clockOutInput !== 'null')
             ? "{$attendanceDate} {$clockOutInput}:00"
             : null;
 
@@ -351,7 +331,7 @@ class AttendanceController extends Controller
                 ]);
             });
 
-            if (!empty($comment)) {
+            if (! empty($comment)) {
                 AttendanceRequest::create([
                     'attendance_id' => $attendance->id,
                     'user_id' => $attendance->user_id,

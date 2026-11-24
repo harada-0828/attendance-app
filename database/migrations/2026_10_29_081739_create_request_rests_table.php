@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('request_rests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('request_id')->constrained()->cascadeOnDelete(); 
+            $table->foreignId('request_id')->constrained()->cascadeOnDelete();
             $table->dateTime('break_start');                                    // 休憩開始
             $table->dateTime('break_end');                                      // 休憩終了
             $table->timestamp('created_at')->nullable();

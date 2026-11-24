@@ -25,7 +25,7 @@ class Id18PublicApiWriteTest extends TestCase
     }
 
     /** @test */
-    public function POST_api_v1_attendance_recordsで勤怠が作成される()
+    public function pos_t_api_v1_attendance_recordsで勤怠が作成される()
     {
         $user = $this->createApiUser('api_store_user@example.com');
         Sanctum::actingAs($user, ['*']);
@@ -80,7 +80,7 @@ class Id18PublicApiWriteTest extends TestCase
     }
 
     /** @test */
-    public function PUT_api_v1_attendance_records_idで勤怠が更新され存在しないIDは404を返す()
+    public function pu_t_api_v1_attendance_records_idで勤怠が更新され存在しない_i_dは404を返す()
     {
         $user = $this->createApiUser('api_update_user@example.com');
         Sanctum::actingAs($user, ['*']);
@@ -92,7 +92,7 @@ class Id18PublicApiWriteTest extends TestCase
             'clock_out' => '2026-06-02 18:00:00',
         ]);
 
-        $this->putJson('/api/v1/attendance-records/' . $record->id, [
+        $this->putJson('/api/v1/attendance-records/'.$record->id, [
             'date' => '2026-06-02',
             'clock_in' => '09:00:00',
             'clock_out' => '19:00:00',
@@ -121,7 +121,7 @@ class Id18PublicApiWriteTest extends TestCase
     }
 
     /** @test */
-    public function DELETE_api_v1_attendance_records_idで勤怠が削除され存在しないIDは404を返す()
+    public function delet_e_api_v1_attendance_records_idで勤怠が削除され存在しない_i_dは404を返す()
     {
         $user = $this->createApiUser('api_delete_user@example.com');
         Sanctum::actingAs($user, ['*']);
@@ -133,7 +133,7 @@ class Id18PublicApiWriteTest extends TestCase
             'clock_out' => '2026-06-04 18:00:00',
         ]);
 
-        $this->deleteJson('/api/v1/attendance-records/' . $record->id)
+        $this->deleteJson('/api/v1/attendance-records/'.$record->id)
             ->assertStatus(204);
 
         $this->assertDatabaseMissing('attendances', [

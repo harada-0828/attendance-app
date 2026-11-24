@@ -38,106 +38,106 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
     public function 出勤時間が退勤時間より後の場合エラーメッセージが表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->followingRedirects()
-             ->from($url)
-             ->post($url, [
-                 'new_clock_in' => '19:00',
-                 'new_clock_out' => '18:00',
-                 'comment' => '電車遅延のため',
-             ])
-             ->assertSee('出勤時間もしくは退勤時間が不適切な値です', false);
+            ->followingRedirects()
+            ->from($url)
+            ->post($url, [
+                'new_clock_in' => '19:00',
+                'new_clock_out' => '18:00',
+                'comment' => '電車遅延のため',
+            ])
+            ->assertSee('出勤時間もしくは退勤時間が不適切な値です', false);
     }
 
     /** @test */
     public function 休憩開始時間が出勤時間より前の場合エラーメッセージが表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->followingRedirects()
-             ->from($url)
-             ->post($url, [
-                 'new_clock_in' => '09:00',
-                 'new_clock_out' => '18:00',
-                 'new_break_in' => ['08:30'],
-                 'new_break_out' => ['09:30'],
-                 'comment' => '休憩開始時刻の修正',
-             ])
-             ->assertSee('休憩時間が不適切な値です', false);
+            ->followingRedirects()
+            ->from($url)
+            ->post($url, [
+                'new_clock_in' => '09:00',
+                'new_clock_out' => '18:00',
+                'new_break_in' => ['08:30'],
+                'new_break_out' => ['09:30'],
+                'comment' => '休憩開始時刻の修正',
+            ])
+            ->assertSee('休憩時間が不適切な値です', false);
     }
 
     /** @test */
     public function 休憩開始時間が退勤時間より後の場合エラーメッセージが表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->followingRedirects()
-             ->from($url)
-             ->post($url, [
-                 'new_clock_in' => '09:00',
-                 'new_clock_out' => '18:00',
-                 'new_break_in' => ['18:30'],
-                 'new_break_out' => ['19:00'],
-                 'comment' => '休憩開始時刻の修正',
-             ])
-             ->assertSee('休憩時間が不適切な値です', false);
+            ->followingRedirects()
+            ->from($url)
+            ->post($url, [
+                'new_clock_in' => '09:00',
+                'new_clock_out' => '18:00',
+                'new_break_in' => ['18:30'],
+                'new_break_out' => ['19:00'],
+                'comment' => '休憩開始時刻の修正',
+            ])
+            ->assertSee('休憩時間が不適切な値です', false);
     }
 
     /** @test */
     public function 休憩終了時間が退勤時間より後の場合エラーメッセージが表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->followingRedirects()
-             ->from($url)
-             ->post($url, [
-                 'new_clock_in' => '09:00',
-                 'new_clock_out' => '18:00',
-                 'new_break_in' => ['12:00'],
-                 'new_break_out' => ['18:30'],
-                 'comment' => '休憩終了時刻の修正',
-             ])
-             ->assertSee('休憩時間もしくは退勤時間が不適切な値です', false);
+            ->followingRedirects()
+            ->from($url)
+            ->post($url, [
+                'new_clock_in' => '09:00',
+                'new_clock_out' => '18:00',
+                'new_break_in' => ['12:00'],
+                'new_break_out' => ['18:30'],
+                'comment' => '休憩終了時刻の修正',
+            ])
+            ->assertSee('休憩時間もしくは退勤時間が不適切な値です', false);
     }
 
     /** @test */
     public function 備考未入力の場合備考を記入してくださいが表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->followingRedirects()
-             ->from($url)
-             ->post($url, [
-                 'new_clock_in' => '09:10',
-                 'new_clock_out' => '18:00',
-                 'comment' => '',
-             ])
-             ->assertSee('備考を記入してください', false);
+            ->followingRedirects()
+            ->from($url)
+            ->post($url, [
+                'new_clock_in' => '09:10',
+                'new_clock_out' => '18:00',
+                'comment' => '',
+            ])
+            ->assertSee('備考を記入してください', false);
     }
 
     /** @test */
     public function 修正申請処理で保存され申請一覧に表示される()
     {
         [$user, $attendance] = $this->createUserAndAttendance();
-        $url = '/attendance/detail/' . $attendance->id;
+        $url = '/attendance/detail/'.$attendance->id;
 
         $this->actingAs($user)
-             ->post($url, [
-                 'new_clock_in' => '09:15',
-                 'new_clock_out' => '18:00',
-                 'comment' => '打刻漏れ修正申請',
-             ])
-             ->assertRedirect();
+            ->post($url, [
+                'new_clock_in' => '09:15',
+                'new_clock_out' => '18:00',
+                'comment' => '打刻漏れ修正申請',
+            ])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('requests', [
             'attendance_id' => $attendance->id,
@@ -147,9 +147,9 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/stamp_correction_request/list')
-             ->assertStatus(200)
-             ->assertSee('打刻漏れ修正申請', false);
+            ->get('/stamp_correction_request/list')
+            ->assertStatus(200)
+            ->assertSee('打刻漏れ修正申請', false);
     }
 
     /** @test */
@@ -170,13 +170,13 @@ class Id11GeneralAttendanceUpdateTest extends TestCase
             ]);
 
             $this->actingAs($user)
-                 ->get('/stamp_correction_request/list?tab=approved')
-                 ->assertStatus(200)
-                 ->assertSee('承認済み申請テスト', false);
+                ->get('/stamp_correction_request/list?tab=approved')
+                ->assertStatus(200)
+                ->assertSee('承認済み申請テスト', false);
 
             $this->actingAs($user)
-                 ->get('/attendance/detail/' . $attendance->id)
-                 ->assertStatus(200);
+                ->get('/attendance/detail/'.$attendance->id)
+                ->assertStatus(200);
         } else {
             $this->assertTrue(true);
         }

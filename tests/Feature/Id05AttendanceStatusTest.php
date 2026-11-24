@@ -31,9 +31,9 @@ class Id05AttendanceStatusTest extends TestCase
         $user = $this->makeUser('off@example.com');
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('勤務外', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('勤務外', false);
     }
 
     /** @test */
@@ -50,9 +50,9 @@ class Id05AttendanceStatusTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('出勤中', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('出勤中', false);
     }
 
     /** @test */
@@ -75,9 +75,9 @@ class Id05AttendanceStatusTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('休憩中', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('休憩中', false);
     }
 
     /** @test */
@@ -94,8 +94,8 @@ class Id05AttendanceStatusTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('退勤済', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('退勤済', false);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -11,20 +12,21 @@ use Illuminate\View\View;
 class AttendanceReportController extends Controller
 {
     private const STANDARD_WORK_MINUTES = 480;
+
     private const LONG_WORK_THRESHOLD_MINUTES = 600;
+
     private const LATE_LIMIT_TIME = '09:00:00';
+
     private const EARLY_LEAVE_LIMIT_TIME = '18:00:00';
+
     private const MONTHS_COUNT = 6;
 
     /**
      * ログインユーザーの過去6ヶ月の勤怠統計レポートを表示する。
-     *
-     * @param  Request  $request
-     * @return View
      */
     public function index(Request $request): View
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $request->user();
         $now = Carbon::now();
 
@@ -83,7 +85,6 @@ class AttendanceReportController extends Controller
     /**
      * 過去6ヶ月分の月次推移データ（労働時間・残業時間）を生成する。
      *
-     * @param  Carbon  $now
      * @param  Collection<int, array{attendance: Attendance, month: string, work_minutes: int, overtime_minutes: int}>  $completedRecords
      * @return list<array{month: string, work_minutes: int, overtime_minutes: int}>
      */
@@ -113,7 +114,6 @@ class AttendanceReportController extends Controller
     /**
      * 当月の異常検知（遅刻回数・早退回数・長時間労働日数）を集計する。
      *
-     * @param  Carbon  $now
      * @param  Collection<int, Attendance>  $attendances
      * @return array{late_count: int, early_leave_count: int, long_work_count: int}
      */

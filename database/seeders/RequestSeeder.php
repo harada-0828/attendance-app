@@ -13,13 +13,11 @@ class RequestSeeder extends Seeder
 {
     /**
      * 修正申請および休憩修正データの初期シードを実行する。
-     *
-     * @return void
      */
     public function run(): void
     {
         $user1 = User::where('email', 'user1@example.com')->first();
-        if (!$user1) {
+        if (! $user1) {
             return;
         }
 
@@ -27,7 +25,7 @@ class RequestSeeder extends Seeder
             ->orderByDesc('date')
             ->first();
 
-        if (!$targetAttendance) {
+        if (! $targetAttendance) {
             return;
         }
 

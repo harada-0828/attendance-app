@@ -18,8 +18,6 @@ class RequestController extends Controller
 {
     /**
      * 一般ユーザーの修正申請一覧画面を表示する（管理者は除外）。
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -35,10 +33,10 @@ class RequestController extends Controller
                 /** @var User|null $applicant */
                 $applicant = $req->user ?? $req->attendance?->user;
 
-                return !$applicant || !(bool) $applicant->admin_status;
+                return ! $applicant || ! (bool) $applicant->admin_status;
             })
             ->map(function (AttendanceRequest $req): object {
-                $item = new \stdClass();
+                $item = new \stdClass;
                 $item->id = $req->id;
                 $item->approval_status = $req->approval_status ? '承認待ち' : '承認済み';
                 $item->user = $req->user ?? $req->attendance?->user;
@@ -55,9 +53,6 @@ class RequestController extends Controller
 
     /**
      * 修正申請承認画面を表示する。
-     *
-     * @param  int|string  $attendance_correct_request_id
-     * @return View
      */
     public function show(int|string $attendance_correct_request_id): View
     {
@@ -68,7 +63,7 @@ class RequestController extends Controller
             ->with(['user', 'attendance.user', 'requestRests'])
             ->findOrFail($attendance_correct_request_id);
 
-        $application = new \stdClass();
+        $application = new \stdClass;
         $application->id = $requestData->id;
         $application->approval_status = $requestData->approval_status ? '承認待ち' : '承認済み';
         $application->user = $requestData->user ?? $requestData->attendance?->user;
@@ -87,7 +82,7 @@ class RequestController extends Controller
 
         $application->proposalBreaks = $requestData->requestRests
             ->map(function (RequestRest $r): object {
-                $breakItem = new \stdClass();
+                $breakItem = new \stdClass;
                 $breakItem->break_in = $r->break_start;
                 $breakItem->break_out = $r->break_end;
 
@@ -102,9 +97,6 @@ class RequestController extends Controller
 
     /**
      * 修正申請を承認し、勤怠および休憩データへ反映して前の画面へリダイレクトする。
-     *
-     * @param  int|string  $attendance_correct_request_id
-     * @return RedirectResponse
      */
     public function update(int|string $attendance_correct_request_id): RedirectResponse
     {

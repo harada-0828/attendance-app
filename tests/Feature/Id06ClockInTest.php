@@ -30,16 +30,16 @@ class Id06ClockInTest extends TestCase
         $user = $this->makeUser('clockin1@example.com');
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertSee('出勤', false);
+            ->get('/attendance')
+            ->assertSee('出勤', false);
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'clock_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'clock_in'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertSee('出勤中', false);
+            ->get('/attendance')
+            ->assertSee('出勤中', false);
     }
 
     /** @test */
@@ -56,8 +56,8 @@ class Id06ClockInTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertDontSee('value="clock_in"', false);
+            ->get('/attendance')
+            ->assertDontSee('value="clock_in"', false);
     }
 
     /** @test */
@@ -67,13 +67,13 @@ class Id06ClockInTest extends TestCase
         $user = $this->makeUser('clockin3@example.com');
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'clock_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'clock_in'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance/list')
-             ->assertStatus(200)
-             ->assertSee('09:05', false);
+            ->get('/attendance/list')
+            ->assertStatus(200)
+            ->assertSee('09:05', false);
 
         Carbon::setTestNow();
     }

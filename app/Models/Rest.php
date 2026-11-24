@@ -29,12 +29,10 @@ class Rest extends Model
 
     /**
      * 休憩が終了しているかどうかを判定して返す。
-     *
-     * @return bool
      */
     public function getIsFinishedAttribute(): bool
     {
-        return !is_null($this->break_end);
+        return ! is_null($this->break_end);
     }
 
     /**

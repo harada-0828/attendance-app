@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
+use App\Models\AttendanceRecord;
+use App\Policies\AttendanceRecordPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -13,10 +15,8 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-    \App\Models\AttendanceRecord::class => \App\Policies\AttendanceRecordPolicy::class,
-];
-
-    
+        AttendanceRecord::class => AttendanceRecordPolicy::class,
+    ];
 
     /**
      * Register any authentication / authorization services.
@@ -25,5 +25,4 @@ class AuthServiceProvider extends ServiceProvider
     {
         //
     }
-
 }

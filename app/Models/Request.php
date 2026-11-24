@@ -38,8 +38,6 @@ class Request extends Model
 
     /**
      * 修正申請が申請済み（承認待ち）かどうかを判定する。
-     *
-     * @return bool
      */
     public function isPending(): bool
     {

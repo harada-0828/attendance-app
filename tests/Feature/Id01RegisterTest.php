@@ -23,54 +23,54 @@ class Id01RegisterTest extends TestCase
     public function 名前が未入力の場合お名前を入力してくださいが表示される()
     {
         $this->followingRedirects()
-             ->from('/register')
-             ->post('/register', $this->validPayload(['name' => '']))
-             ->assertSee('お名前を入力してください', false);
+            ->from('/register')
+            ->post('/register', $this->validPayload(['name' => '']))
+            ->assertSee('お名前を入力してください', false);
     }
 
     /** @test */
     public function メールアドレスが未入力の場合メールアドレスを入力してくださいが表示される()
     {
         $this->followingRedirects()
-             ->from('/register')
-             ->post('/register', $this->validPayload(['email' => '']))
-             ->assertSee('メールアドレスを入力してください', false);
+            ->from('/register')
+            ->post('/register', $this->validPayload(['email' => '']))
+            ->assertSee('メールアドレスを入力してください', false);
     }
 
     /** @test */
     public function パスワードが8文字未満の場合パスワードは8文字以上で入力してくださいが表示される()
     {
         $this->followingRedirects()
-             ->from('/register')
-             ->post('/register', $this->validPayload([
-                 'password' => 'pass123',
-                 'password_confirmation' => 'pass123',
-             ]))
-             ->assertSee('パスワードは8文字以上で入力してください', false);
+            ->from('/register')
+            ->post('/register', $this->validPayload([
+                'password' => 'pass123',
+                'password_confirmation' => 'pass123',
+            ]))
+            ->assertSee('パスワードは8文字以上で入力してください', false);
     }
 
     /** @test */
     public function パスワードが一致しない場合パスワードと一致しませんが表示される()
     {
         $this->followingRedirects()
-             ->from('/register')
-             ->post('/register', $this->validPayload([
-                 'password' => 'password123',
-                 'password_confirmation' => 'different123',
-             ]))
-             ->assertSee('パスワードと一致しません', false);
+            ->from('/register')
+            ->post('/register', $this->validPayload([
+                'password' => 'password123',
+                'password_confirmation' => 'different123',
+            ]))
+            ->assertSee('パスワードと一致しません', false);
     }
 
     /** @test */
     public function パスワードが未入力の場合パスワードを入力してくださいが表示される()
     {
         $this->followingRedirects()
-             ->from('/register')
-             ->post('/register', $this->validPayload([
-                 'password' => '',
-                 'password_confirmation' => '',
-             ]))
-             ->assertSee('パスワードを入力してください', false);
+            ->from('/register')
+            ->post('/register', $this->validPayload([
+                'password' => '',
+                'password_confirmation' => '',
+            ]))
+            ->assertSee('パスワードを入力してください', false);
     }
 
     /** @test */

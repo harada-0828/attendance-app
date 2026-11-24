@@ -8,8 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * データベースの初期シード処理を実行する。
-     *
-     * @return void
      */
     public function run(): void
     {

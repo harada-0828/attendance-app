@@ -2,17 +2,17 @@
 
 namespace App\Http\Responses;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Auth;
 
 class LogoutResponse implements LogoutResponseContract
 {
     /**
      * ログアウト処理後のリダイレクト先を制御する
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param  Request  $request
      */
     public function toResponse($request): Response
     {

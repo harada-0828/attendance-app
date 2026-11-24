@@ -10,8 +10,6 @@ class UserSeeder extends Seeder
 {
     /**
      * ユーザーデータの初期シードを実行する。
-     *
-     * @return void
      */
     public function run(): void
     {

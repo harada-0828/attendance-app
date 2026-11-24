@@ -41,12 +41,12 @@ class Id14AdminStaffListTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-             ->get('/admin/staff/list')
-             ->assertStatus(200)
-             ->assertSee('一般太郎', false)
-             ->assertSee('taro_general@example.com', false)
-             ->assertSee('一般花子', false)
-             ->assertSee('hanako_general@example.com', false);
+            ->get('/admin/staff/list')
+            ->assertStatus(200)
+            ->assertSee('一般太郎', false)
+            ->assertSee('taro_general@example.com', false)
+            ->assertSee('一般花子', false)
+            ->assertSee('hanako_general@example.com', false);
     }
 
     /** @test */
@@ -92,24 +92,24 @@ class Id14AdminStaffListTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/staff/' . $staff->id)
-             ->assertStatus(200)
-             ->assertSee('09:00', false)
-             ->assertSee('18:00', false);
+            ->get('/admin/attendance/staff/'.$staff->id)
+            ->assertStatus(200)
+            ->assertSee('09:00', false)
+            ->assertSee('18:00', false);
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/staff/' . $staff->id . '?date=2026-10')
-             ->assertStatus(200)
-             ->assertSee('09:15', false);
+            ->get('/admin/attendance/staff/'.$staff->id.'?date=2026-10')
+            ->assertStatus(200)
+            ->assertSee('09:15', false);
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/staff/' . $staff->id . '?date=2026-12')
-             ->assertStatus(200)
-             ->assertSee('09:20', false);
+            ->get('/admin/attendance/staff/'.$staff->id.'?date=2026-12')
+            ->assertStatus(200)
+            ->assertSee('09:20', false);
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/' . $attendance->id)
-             ->assertStatus(200);
+            ->get('/admin/attendance/'.$attendance->id)
+            ->assertStatus(200);
 
         Carbon::setTestNow();
     }

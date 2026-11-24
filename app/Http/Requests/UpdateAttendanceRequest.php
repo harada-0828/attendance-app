@@ -10,8 +10,6 @@ class UpdateAttendanceRequest extends FormRequest
 {
     /**
      * リクエストの認可判定を行う。
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -20,13 +18,11 @@ class UpdateAttendanceRequest extends FormRequest
 
     /**
      * バリデーション実行前に、出退勤・休憩の時刻文字列を「H:i」形式へ正規化する。
-     *
-     * @return void
      */
     protected function prepareForValidation(): void
     {
         $formatTime = static function (mixed $time): mixed {
-            if (!is_string($time) || $time === '' || $time === 'null') {
+            if (! is_string($time) || $time === '' || $time === 'null') {
                 return $time;
             }
 
@@ -76,7 +72,7 @@ class UpdateAttendanceRequest extends FormRequest
                 'after:new_break_in.*',
                 'before_or_equal:new_clock_out',
                 function (string $attribute, mixed $value, Closure $fail): void {
-                    if (empty($value) || !is_string($value)) {
+                    if (empty($value) || ! is_string($value)) {
                         return;
                     }
 
@@ -88,8 +84,8 @@ class UpdateAttendanceRequest extends FormRequest
                             $out = $breakOuts[$i] ?? null;
 
                             if (
-                                empty($in) || $in === 'null' || !is_string($in)
-                                || empty($out) || $out === 'null' || !is_string($out)
+                                empty($in) || $in === 'null' || ! is_string($in)
+                                || empty($out) || $out === 'null' || ! is_string($out)
                             ) {
                                 return null;
                             }

@@ -74,8 +74,6 @@ class AttendanceRecord extends Model
 
     /**
      * 合計休憩時間を算出して返す。
-     *
-     * @return string
      */
     public function getTotalBreakTimeAttribute(): string
     {
@@ -94,12 +92,10 @@ class AttendanceRecord extends Model
 
     /**
      * 実働合計時間を算出して返す。
-     *
-     * @return string
      */
     public function getTotalTimeAttribute(): string
     {
-        if (!$this->clock_in || !$this->clock_out) {
+        if (! $this->clock_in || ! $this->clock_out) {
             return '00:00';
         }
 
@@ -122,8 +118,6 @@ class AttendanceRecord extends Model
 
     /**
      * 最新の修正申請理由（reason）を備考（comment）として取得する。
-     *
-     * @return string|null
      */
     public function getCommentAttribute(): ?string
     {

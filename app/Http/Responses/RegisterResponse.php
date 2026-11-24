@@ -13,13 +13,12 @@ class RegisterResponse implements RegisterResponseContract
      * 新規ユーザー登録後のリダイレクト先レスポンスを生成する。
      *
      * @param  Request  $request
-     * @return Response
      */
     public function toResponse($request): Response
     {
         $user = $request->user();
 
-        if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
+        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 

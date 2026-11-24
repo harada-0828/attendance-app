@@ -20,13 +20,15 @@ class RedirectIfAuthenticated
 
                 // 1. 【管理者ログイン画面】にアクセスした場合
                 if ($request->is('admin/login*')) {
-                    if ($user && !$user->admin_status) {
+                    if ($user && ! $user->admin_status) {
                         // 一般ユーザーがログイン中なら、ログアウトさせて管理者ログイン画面を表示
                         Auth::guard($guard)->logout();
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();
+
                         return $next($request);
                     }
+
                     // すでに管理者としてログイン中なら管理画面へ
                     return redirect('/admin/attendance/list');
                 }
@@ -38,8 +40,10 @@ class RedirectIfAuthenticated
                         Auth::guard($guard)->logout();
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();
+
                         return $next($request);
                     }
+
                     // すでに一般ユーザーとしてログイン中なら勤怠画面へ
                     return redirect(RouteServiceProvider::HOME);
                 }

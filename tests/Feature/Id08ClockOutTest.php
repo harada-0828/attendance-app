@@ -40,16 +40,16 @@ class Id08ClockOutTest extends TestCase
         $user = $this->makeWorkingUser('clockout1@example.com');
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertSee('退勤', false);
+            ->get('/attendance')
+            ->assertSee('退勤', false);
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'clock_out'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'clock_out'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertSee('退勤済', false);
+            ->get('/attendance')
+            ->assertSee('退勤済', false);
     }
 
     /** @test */
@@ -59,13 +59,13 @@ class Id08ClockOutTest extends TestCase
         $user = $this->makeWorkingUser('clockout2@example.com');
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'clock_out'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'clock_out'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance/list')
-             ->assertStatus(200)
-             ->assertSee('18:10', false);
+            ->get('/attendance/list')
+            ->assertStatus(200)
+            ->assertSee('18:10', false);
 
         Carbon::setTestNow();
     }

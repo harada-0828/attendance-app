@@ -10,8 +10,6 @@ class AdminUpdateAttendanceRequest extends FormRequest
 {
     /**
      * リクエストの認可判定を行う。
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -20,13 +18,11 @@ class AdminUpdateAttendanceRequest extends FormRequest
 
     /**
      * バリデーション前に出退勤・休憩の時刻文字列を「H:i」形式へ正規化する。
-     *
-     * @return void
      */
     protected function prepareForValidation(): void
     {
         $formatTime = static function (mixed $time): mixed {
-            if (!is_string($time) || $time === '' || $time === 'null') {
+            if (! is_string($time) || $time === '' || $time === 'null') {
                 return $time;
             }
 
@@ -73,20 +69,20 @@ class AdminUpdateAttendanceRequest extends FormRequest
                 'nullable',
                 'date_format:H:i',
                 function (string $attribute, mixed $value, Closure $fail): void {
-                    if (empty($value) || !is_string($value)) {
+                    if (empty($value) || ! is_string($value)) {
                         return;
                     }
 
                     $clockIn = $this->input('new_clock_in');
                     $clockOut = $this->input('new_clock_out');
 
-                    if (!empty($clockIn) && $value < $clockIn) {
+                    if (! empty($clockIn) && $value < $clockIn) {
                         $fail('休憩時間が不適切な値です');
 
                         return;
                     }
 
-                    if (!empty($clockOut) && $value >= $clockOut) {
+                    if (! empty($clockOut) && $value >= $clockOut) {
                         $fail('休憩時間が不適切な値です');
                     }
                 },
@@ -95,7 +91,7 @@ class AdminUpdateAttendanceRequest extends FormRequest
                 'nullable',
                 'date_format:H:i',
                 function (string $attribute, mixed $value, Closure $fail): void {
-                    if (empty($value) || !is_string($value)) {
+                    if (empty($value) || ! is_string($value)) {
                         return;
                     }
 
@@ -104,13 +100,13 @@ class AdminUpdateAttendanceRequest extends FormRequest
                     $breakIn = $index !== null ? $this->input("new_break_in.{$index}") : null;
                     $clockOut = $this->input('new_clock_out');
 
-                    if (!empty($breakIn) && is_string($breakIn) && $value <= $breakIn) {
+                    if (! empty($breakIn) && is_string($breakIn) && $value <= $breakIn) {
                         $fail('休憩時間が不適切な値です');
 
                         return;
                     }
 
-                    if (!empty($clockOut) && is_string($clockOut) && $value > $clockOut) {
+                    if (! empty($clockOut) && is_string($clockOut) && $value > $clockOut) {
                         $fail('休憩時間もしくは退勤時間が不適切な値です');
 
                         return;
@@ -124,8 +120,8 @@ class AdminUpdateAttendanceRequest extends FormRequest
                             $out = $breakOuts[$i] ?? null;
 
                             if (
-                                empty($in) || $in === 'null' || !is_string($in)
-                                || empty($out) || $out === 'null' || !is_string($out)
+                                empty($in) || $in === 'null' || ! is_string($in)
+                                || empty($out) || $out === 'null' || ! is_string($out)
                             ) {
                                 return null;
                             }

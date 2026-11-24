@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Carbon\Carbon; // ← ここを追加してください！
+use Carbon\Carbon;
+use Illuminate\Support\ServiceProvider; // ← ここを追加してください！
 
 class AppServiceProvider extends ServiceProvider
 {

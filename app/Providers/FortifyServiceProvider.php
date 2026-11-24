@@ -80,7 +80,7 @@ class FortifyServiceProvider extends ServiceProvider
             $user = User::where('email', $request->email)->first();
 
             // ユーザーがいない、またはパスワードが一致しない場合
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages([
                     'email' => [__('auth.failed')],
                 ]);
@@ -89,7 +89,7 @@ class FortifyServiceProvider extends ServiceProvider
             // admin_status カラムを使って権限チェック
             if ($isAdminLogin) {
                 // 管理者ログイン画面で、一般ユーザーでのログインは弾く
-                if (!$user->admin_status) {
+                if (! $user->admin_status) {
                     throw ValidationException::withMessages([
                         'email' => [__('auth.failed')],
                     ]);
@@ -115,7 +115,7 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $email = (string) $request->email;
 
-            return Limit::perMinute(5)->by($email . $request->ip());
+            return Limit::perMinute(5)->by($email.$request->ip());
         });
     }
 }

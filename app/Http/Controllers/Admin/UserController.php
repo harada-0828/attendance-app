@@ -12,8 +12,6 @@ class UserController extends Controller
 {
     /**
      * 管理者用の登録済み一般スタッフ一覧画面を表示する（管理者は除外）。
-     *
-     * @return View
      */
     public function index(): View
     {

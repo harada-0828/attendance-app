@@ -99,7 +99,7 @@ class Id16EmailVerificationTest extends TestCase
 
         $this->actingAs($unverifiedUser)
             ->get($verificationUrl)
-        ->assertRedirect('/attendance?verified=1');
+            ->assertRedirect('/attendance?verified=1');
 
         $this->assertNotNull($unverifiedUser->fresh()->email_verified_at);
 

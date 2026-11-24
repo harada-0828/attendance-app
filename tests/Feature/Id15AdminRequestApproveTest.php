@@ -63,14 +63,14 @@ class Id15AdminRequestApproveTest extends TestCase
             ]);
 
             $this->actingAs($admin)
-                 ->get('/stamp_correction_request/list')
-                 ->assertStatus(200)
-                 ->assertSee('未承認の申請理由', false);
+                ->get('/stamp_correction_request/list')
+                ->assertStatus(200)
+                ->assertSee('未承認の申請理由', false);
 
             $this->actingAs($admin)
-                 ->get('/stamp_correction_request/list?tab=approved')
-                 ->assertStatus(200)
-                 ->assertSee('承認済みの申請理由', false);
+                ->get('/stamp_correction_request/list?tab=approved')
+                ->assertStatus(200)
+                ->assertSee('承認済みの申請理由', false);
         } else {
             $this->assertTrue(true);
         }
@@ -115,13 +115,13 @@ class Id15AdminRequestApproveTest extends TestCase
             ]);
 
             $this->actingAs($admin)
-                 ->get('/stamp_correction_request/approve/' . $requestId)
-                 ->assertStatus(200)
-                 ->assertSee('早退のため', false);
+                ->get('/stamp_correction_request/approve/'.$requestId)
+                ->assertStatus(200)
+                ->assertSee('早退のため', false);
 
             $this->actingAs($admin)
-                 ->post('/stamp_correction_request/approve/' . $requestId)
-                 ->assertRedirect();
+                ->post('/stamp_correction_request/approve/'.$requestId)
+                ->assertRedirect();
 
             $this->assertDatabaseHas('attendances', [
                 'id' => $attendance->id,

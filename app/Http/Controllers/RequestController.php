@@ -17,8 +17,6 @@ class RequestController extends Controller
 {
     /**
      * ログインユーザーの勤怠修正履歴一覧画面を表示する。
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -51,9 +49,6 @@ class RequestController extends Controller
 
     /**
      * 勤怠詳細画面を表示する（承認待ち申請があれば申請内容を優先反映）。
-     *
-     * @param  int|string  $id
-     * @return View
      */
     public function show(int|string $id): View
     {
@@ -128,10 +123,6 @@ class RequestController extends Controller
 
     /**
      * 勤怠詳細の修正申請を登録し、詳細画面へリダイレクトする。
-     *
-     * @param  UpdateAttendanceRequest  $request
-     * @param  int|string  $id
-     * @return RedirectResponse
      */
     public function store(UpdateAttendanceRequest $request, int|string $id): RedirectResponse
     {
@@ -177,7 +168,7 @@ class RequestController extends Controller
                         fn (array $existing): bool => $newStart < $existing['end'] && $existing['start'] < $newEnd
                     );
 
-                    if (!$isDuplicate) {
+                    if (! $isDuplicate) {
                         $carry->push([
                             'start' => $newStart,
                             'end' => $newEnd,

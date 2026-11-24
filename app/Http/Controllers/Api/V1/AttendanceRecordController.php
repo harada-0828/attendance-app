@@ -20,9 +20,6 @@ class AttendanceRecordController extends Controller
 {
     /**
      * 勤怠レコード一覧を取得する。
-     *
-     * @param  IndexAttendanceRecordRequest  $request
-     * @return AnonymousResourceCollection
      */
     public function index(IndexAttendanceRecordRequest $request): AnonymousResourceCollection
     {
@@ -33,15 +30,15 @@ class AttendanceRecordController extends Controller
             ->orderByDesc('date')
             ->orderByDesc('id');
 
-        if (!empty($validated['user_id'])) {
+        if (! empty($validated['user_id'])) {
             $query->where('user_id', (int) $validated['user_id']);
         }
 
-        if (!empty($validated['date'])) {
+        if (! empty($validated['date'])) {
             $query->whereDate('date', $validated['date']);
         }
 
-        if (!empty($validated['month'])) {
+        if (! empty($validated['month'])) {
             $parts = explode('-', (string) $validated['month']);
             if (count($parts) === 2) {
                 [$year, $month] = $parts;
@@ -58,9 +55,6 @@ class AttendanceRecordController extends Controller
 
     /**
      * 指定された勤怠レコードの詳細を取得する。
-     *
-     * @param  AttendanceRecord  $attendanceRecord
-     * @return AttendanceRecordResource
      */
     public function show(AttendanceRecord $attendanceRecord): AttendanceRecordResource
     {
@@ -71,24 +65,21 @@ class AttendanceRecordController extends Controller
 
     /**
      * 勤怠レコードを新規登録する。
-     *
-     * @param  StoreAttendanceRecordRequest  $request
-     * @return JsonResponse
      */
     public function store(StoreAttendanceRecordRequest $request): JsonResponse
     {
         $validated = $request->validated();
         $authUser = $request->user();
 
-        $targetUserId = (!empty($validated['user_id']) && (bool) $authUser?->admin_status)
+        $targetUserId = (! empty($validated['user_id']) && (bool) $authUser?->admin_status)
             ? (int) $validated['user_id']
             : (int) $authUser?->id;
 
         $date = (string) $validated['date'];
-        $clockIn = !empty($validated['clock_in'])
+        $clockIn = ! empty($validated['clock_in'])
             ? "{$date} {$validated['clock_in']}"
             : null;
-        $clockOut = !empty($validated['clock_out'])
+        $clockOut = ! empty($validated['clock_out'])
             ? "{$date} {$validated['clock_out']}"
             : null;
 
@@ -102,7 +93,7 @@ class AttendanceRecordController extends Controller
                 'clock_out' => $clockOut,
             ]);
 
-            if (!empty($validated['comment'])) {
+            if (! empty($validated['comment'])) {
                 AttendanceRequest::create([
                     'attendance_id' => $created->id,
                     'user_id' => $authUser?->id ?? $targetUserId,
@@ -126,9 +117,6 @@ class AttendanceRecordController extends Controller
     /**
      * 指定された勤怠レコードを更新する。
      *
-     * @param  UpdateAttendanceRecordRequest  $request
-     * @param  AttendanceRecord  $attendanceRecord
-     * @return AttendanceRecordResource
      *
      * @throws ValidationException
      */
@@ -179,16 +167,16 @@ class AttendanceRecordController extends Controller
                 : null;
         }
 
-        if (!empty($validated['user_id']) && (bool) $authUser?->admin_status) {
+        if (! empty($validated['user_id']) && (bool) $authUser?->admin_status) {
             $updateData['user_id'] = (int) $validated['user_id'];
         }
 
         DB::transaction(function () use ($attendanceRecord, $updateData, $validated, $authUser, $date, $effectiveClockInStr, $effectiveClockOutStr): void {
-            if (!empty($updateData)) {
+            if (! empty($updateData)) {
                 $attendanceRecord->update($updateData);
             }
 
-            if (array_key_exists('comment', $validated) && !empty($validated['comment'])) {
+            if (array_key_exists('comment', $validated) && ! empty($validated['comment'])) {
                 AttendanceRequest::create([
                     'attendance_id' => $attendanceRecord->id,
                     'user_id' => $authUser?->id ?? $attendanceRecord->user_id,
@@ -207,9 +195,6 @@ class AttendanceRecordController extends Controller
 
     /**
      * 指定された勤怠レコードを削除する。
-     *
-     * @param  AttendanceRecord  $attendanceRecord
-     * @return Response
      */
     public function destroy(AttendanceRecord $attendanceRecord): Response
     {

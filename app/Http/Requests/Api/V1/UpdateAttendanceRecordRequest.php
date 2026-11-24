@@ -31,7 +31,7 @@ class UpdateAttendanceRecordRequest extends FormRequest
             ? (int) $this->input('user_id')
             : (int) ($record?->user_id ?? $this->user()?->id);
 
-        $dateRule = Rule::unique((new AttendanceRecord())->getTable(), 'date')
+        $dateRule = Rule::unique((new AttendanceRecord)->getTable(), 'date')
             ->where(fn ($query) => $query->where('user_id', $targetUserId));
 
         if ($recordId) {

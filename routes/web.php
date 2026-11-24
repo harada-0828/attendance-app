@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\RequestController;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -34,7 +35,7 @@ Route::middleware('auth')->group(function () {
             return app(AdminRequestController::class)->index();
         }
 
-        if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail()) {
+        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 

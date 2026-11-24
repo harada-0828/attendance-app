@@ -40,18 +40,18 @@ class Id07BreakTest extends TestCase
         $user = $this->createWorkingUser();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('休憩入', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('休憩入', false);
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_in'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('休憩中', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('休憩中', false);
 
         Carbon::setTestNow();
     }
@@ -63,18 +63,18 @@ class Id07BreakTest extends TestCase
         $user = $this->createWorkingUser();
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_in'])
+            ->assertRedirect();
 
         Carbon::setTestNow(Carbon::create(2026, 11, 19, 12, 30, 0));
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_out'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_out'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('休憩入', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('休憩入', false);
 
         Carbon::setTestNow();
     }
@@ -86,22 +86,22 @@ class Id07BreakTest extends TestCase
         $user = $this->createWorkingUser();
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_in'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('休憩戻', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('休憩戻', false);
 
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_out'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_out'])
+            ->assertRedirect();
 
         $this->actingAs($user)
-             ->get('/attendance')
-             ->assertStatus(200)
-             ->assertSee('出勤中', false);
+            ->get('/attendance')
+            ->assertStatus(200)
+            ->assertSee('出勤中', false);
 
         Carbon::setTestNow();
     }
@@ -121,20 +121,20 @@ class Id07BreakTest extends TestCase
 
         // 出勤打刻（09:00）
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'clock_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'clock_in'])
+            ->assertRedirect();
 
         // 休憩入（12:00）
         Carbon::setTestNow(Carbon::create(2026, 11, 19, 12, 0, 0));
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_in'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_in'])
+            ->assertRedirect();
 
         // 休憩戻（12:45）
         Carbon::setTestNow(Carbon::create(2026, 11, 19, 12, 45, 0));
         $this->actingAs($user)
-             ->post('/attendance', ['action' => 'rest_out'])
-             ->assertRedirect();
+            ->post('/attendance', ['action' => 'rest_out'])
+            ->assertRedirect();
 
         $this->assertDatabaseHas('rests', [
             'break_start' => '2026-11-19 12:00:00',
@@ -142,10 +142,10 @@ class Id07BreakTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance/list?date=2026-11')
-             ->assertStatus(200)
-             ->assertSee('11/19(木)', false)
-             ->assertSee('09:00', false);
+            ->get('/attendance/list?date=2026-11')
+            ->assertStatus(200)
+            ->assertSee('11/19(木)', false)
+            ->assertSee('09:00', false);
 
         Carbon::setTestNow();
     }

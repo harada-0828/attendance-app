@@ -13,8 +13,6 @@ class AttendanceSeeder extends Seeder
 {
     /**
      * 勤怠データの初期シードを実行する。
-     *
-     * @return void
      */
     public function run(): void
     {
@@ -35,9 +33,6 @@ class AttendanceSeeder extends Seeder
 
     /**
      * 検証用の意図的な勤怠データ（過去5ヶ月および当月分）を登録する。
-     *
-     * @param  User  $user
-     * @return void
      */
     private function seedUser1IntentionalData(User $user): void
     {
@@ -70,7 +65,7 @@ class AttendanceSeeder extends Seeder
                 /** @var array{0: string, 1: string}|null $times */
                 $times = $pair->get(1);
 
-                if (!$date || !$times) {
+                if (! $date || ! $times) {
                     return;
                 }
 
@@ -81,9 +76,6 @@ class AttendanceSeeder extends Seeder
 
     /**
      * 一般ユーザー向けのサンプル勤怠データを登録する。
-     *
-     * @param  User  $user
-     * @return void
      */
     private function seedGeneralSampleData(User $user): void
     {
@@ -92,7 +84,7 @@ class AttendanceSeeder extends Seeder
 
         collect(CarbonPeriod::create($start, '1 day', $end))
             ->reject(fn (Carbon $date): bool => $date->isWeekend())
-            ->reject(fn (Carbon $date): bool => $date->day > 15 && !$date->isToday())
+            ->reject(fn (Carbon $date): bool => $date->day > 15 && ! $date->isToday())
             ->each(function (Carbon $date) use ($user): void {
                 $clockOut = $date->isToday() ? null : '18:00:00';
                 $this->upsertAttendance($user->id, $date, '09:00:00', $clockOut);
@@ -102,7 +94,6 @@ class AttendanceSeeder extends Seeder
     /**
      * 指定した月の平日一覧をコレクションで取得する。
      *
-     * @param  Carbon  $monthStart
      * @return Collection<int, Carbon>
      */
     private function getWeekdaysInMonth(Carbon $monthStart): Collection
@@ -110,18 +101,12 @@ class AttendanceSeeder extends Seeder
         $endOfMonth = $monthStart->copy()->endOfMonth();
 
         return collect(CarbonPeriod::create($monthStart, '1 day', $endOfMonth))
-            ->filter(fn (Carbon $date): bool => !$date->isWeekend())
+            ->filter(fn (Carbon $date): bool => ! $date->isWeekend())
             ->values();
     }
 
     /**
      * ユーザーと日付をキーに勤怠レコードを作成または更新する。
-     *
-     * @param  int  $userId
-     * @param  Carbon  $date
-     * @param  string  $clockInTime
-     * @param  string|null  $clockOutTime
-     * @return void
      */
     private function upsertAttendance(int $userId, Carbon $date, string $clockInTime, ?string $clockOutTime): void
     {

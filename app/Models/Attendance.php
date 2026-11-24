@@ -33,12 +33,10 @@ class Attendance extends Model
 
     /**
      * 出退勤および休憩の状態から現在の勤務ステータスを判定して返す。
-     *
-     * @return string
      */
     public function getStatusAttribute(): string
     {
-        if (!is_null($this->clock_out)) {
+        if (! is_null($this->clock_out)) {
             return '退勤済';
         }
 
@@ -51,7 +49,7 @@ class Attendance extends Model
             return '休憩中';
         }
 
-        if (!is_null($this->clock_in)) {
+        if (! is_null($this->clock_in)) {
             return '出勤中';
         }
 
@@ -60,8 +58,6 @@ class Attendance extends Model
 
     /**
      * 完了済みの休憩時間の合計（分）を算出して返す。
-     *
-     * @return int
      */
     public function getTotalBreakMinutesAttribute(): int
     {
@@ -84,8 +80,6 @@ class Attendance extends Model
 
     /**
      * 1日の実働時間（分）を算出して返す。
-     *
-     * @return int
      */
     public function getWorkMinutesAttribute(): int
     {

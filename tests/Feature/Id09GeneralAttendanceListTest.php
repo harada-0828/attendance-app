@@ -55,10 +55,10 @@ class Id09GeneralAttendanceListTest extends TestCase
         $user = $this->createUserWithAttendances();
 
         $this->actingAs($user)
-             ->get('/attendance/list')
-             ->assertStatus(200)
-             ->assertSee('2026/11', false)
-             ->assertSee('09:00', false);
+            ->get('/attendance/list')
+            ->assertStatus(200)
+            ->assertSee('2026/11', false)
+            ->assertSee('09:00', false);
 
         Carbon::setTestNow();
     }
@@ -69,10 +69,10 @@ class Id09GeneralAttendanceListTest extends TestCase
         $user = $this->createUserWithAttendances();
 
         $this->actingAs($user)
-             ->get('/attendance/list?date=2026-10')
-             ->assertStatus(200)
-             ->assertSee('2026/10', false)
-             ->assertSee('09:30', false);
+            ->get('/attendance/list?date=2026-10')
+            ->assertStatus(200)
+            ->assertSee('2026/10', false)
+            ->assertSee('09:30', false);
 
         Carbon::setTestNow();
     }
@@ -83,10 +83,10 @@ class Id09GeneralAttendanceListTest extends TestCase
         $user = $this->createUserWithAttendances();
 
         $this->actingAs($user)
-             ->get('/attendance/list?date=2026-12')
-             ->assertStatus(200)
-             ->assertSee('2026/12', false)
-             ->assertSee('08:45', false);
+            ->get('/attendance/list?date=2026-12')
+            ->assertStatus(200)
+            ->assertSee('2026/12', false)
+            ->assertSee('08:45', false);
 
         Carbon::setTestNow();
     }
@@ -100,8 +100,8 @@ class Id09GeneralAttendanceListTest extends TestCase
             ->first();
 
         $this->actingAs($user)
-             ->get('/attendance/detail/' . $attendance->id)
-             ->assertStatus(200);
+            ->get('/attendance/detail/'.$attendance->id)
+            ->assertStatus(200);
 
         Carbon::setTestNow();
     }

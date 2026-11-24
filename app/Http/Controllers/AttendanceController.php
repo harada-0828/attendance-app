@@ -16,9 +16,6 @@ class AttendanceController extends Controller
 {
     /**
      * 指定された年月の勤怠一覧画面を表示する。
-     *
-     * @param  Request  $request
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -91,8 +88,6 @@ class AttendanceController extends Controller
 
     /**
      * 出勤登録画面（打刻画面）を表示する。
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -130,9 +125,6 @@ class AttendanceController extends Controller
 
     /**
      * 打刻処理（出勤・休憩入・休憩戻・退勤）を実行して打刻画面へリダイレクトする。
-     *
-     * @param  Request  $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
@@ -163,14 +155,10 @@ class AttendanceController extends Controller
 
     /**
      * 出勤打刻を保存する。
-     *
-     * @param  Attendance  $attendance
-     * @param  Carbon  $now
-     * @return void
      */
     private function handleClockIn(Attendance $attendance, Carbon $now): void
     {
-        if (!$attendance->exists) {
+        if (! $attendance->exists) {
             $attendance->clock_in = $now;
             $attendance->save();
         }
@@ -178,10 +166,6 @@ class AttendanceController extends Controller
 
     /**
      * 休憩入打刻を保存する。
-     *
-     * @param  Attendance  $attendance
-     * @param  Carbon  $now
-     * @return void
      */
     private function handleRestIn(Attendance $attendance, Carbon $now): void
     {
@@ -195,10 +179,6 @@ class AttendanceController extends Controller
 
     /**
      * 休憩戻打刻を保存する。
-     *
-     * @param  Attendance  $attendance
-     * @param  Carbon  $now
-     * @return void
      */
     private function handleRestOut(Attendance $attendance, Carbon $now): void
     {
@@ -217,10 +197,6 @@ class AttendanceController extends Controller
 
     /**
      * 退勤打刻を保存する。
-     *
-     * @param  Attendance  $attendance
-     * @param  Carbon  $now
-     * @return void
      */
     private function handleClockOut(Attendance $attendance, Carbon $now): void
     {

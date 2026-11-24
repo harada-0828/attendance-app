@@ -38,12 +38,12 @@ class Id10GeneralAttendanceDetailTest extends TestCase
         ]);
 
         $this->actingAs($user)
-             ->get('/attendance/detail/' . $attendance->id)
-             ->assertStatus(200)
-             ->assertSee('詳細確認太郎', false)
-             ->assertSee('09:00', false)
-             ->assertSee('18:00', false)
-             ->assertSee('12:00', false)
-             ->assertSee('13:00', false);
+            ->get('/attendance/detail/'.$attendance->id)
+            ->assertStatus(200)
+            ->assertSee('詳細確認太郎', false)
+            ->assertSee('09:00', false)
+            ->assertSee('18:00', false)
+            ->assertSee('12:00', false)
+            ->assertSee('13:00', false);
     }
 }

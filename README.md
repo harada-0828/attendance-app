@@ -7,7 +7,7 @@
 開発プロセスシートの要件（型宣言、PHPDoc、Collectionメソッドの活用、Eager LoadingによるN+1対策、指定技術スタックの遵守など）に沿って実装し、PHPUnitによるテストスイートを用意しています。
 
 ## ER図
-![ER図](ER.drawio.png)
+![ER図](public/images/ER.drawio.png)
 
 ## 環境構築手順
 

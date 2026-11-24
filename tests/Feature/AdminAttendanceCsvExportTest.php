@@ -36,7 +36,7 @@ class AdminAttendanceCsvExportTest extends TestCase
     }
 
     /** @test */
-    public function 未認証ユーザーはCSV出力を実行できない()
+    public function 未認証ユーザーは_cs_v出力を実行できない()
     {
         $staff = $this->createGeneralUser();
 
@@ -47,7 +47,7 @@ class AdminAttendanceCsvExportTest extends TestCase
     }
 
     /** @test */
-    public function 管理者が指定したユーザーと月の勤怠一覧をCSVダウンロードできる()
+    public function 管理者が指定したユーザーと月の勤怠一覧を_cs_vダウンロードできる()
     {
         $admin = $this->createAdminUser();
         $targetStaff = $this->createGeneralUser('対象スタッフ', 'target@example.com');

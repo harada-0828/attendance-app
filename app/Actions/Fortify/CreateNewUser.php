@@ -17,7 +17,6 @@ class CreateNewUser implements CreatesNewUsers
      * 新規ユーザーの入力値をバリデーションし、ユーザーを作成する。
      *
      * @param  array<string, string>  $input
-     * @return User
      *
      * @throws ValidationException
      */

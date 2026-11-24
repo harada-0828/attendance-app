@@ -13,7 +13,7 @@ class Id17PublicApiReadTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function GET_api_v1_attendance_recordsで勤怠一覧がJSONで取得できる()
+    public function ge_t_api_v1_attendance_recordsで勤怠一覧が_jso_nで取得できる()
     {
         $user = User::create([
             'name' => '一覧確認ユーザー',
@@ -57,7 +57,7 @@ class Id17PublicApiReadTest extends TestCase
     }
 
     /** @test */
-    public function GET_api_v1_attendance_records_idで勤怠詳細がJSONで取得できる()
+    public function ge_t_api_v1_attendance_records_idで勤怠詳細が_jso_nで取得できる()
     {
         $user = User::create([
             'name' => '詳細確認ユーザー',
@@ -74,7 +74,7 @@ class Id17PublicApiReadTest extends TestCase
             'clock_out' => '2026-05-05 18:00:00',
         ]);
 
-        $this->getJson('/api/v1/attendance-records/' . $record->id)
+        $this->getJson('/api/v1/attendance-records/'.$record->id)
             ->assertStatus(200)
             ->assertJsonPath('data.id', $record->id)
             ->assertJsonPath('data.user_id', $user->id)
@@ -93,7 +93,7 @@ class Id17PublicApiReadTest extends TestCase
     }
 
     /** @test */
-    public function 存在しないIDでは404とエラーJSONが返る()
+    public function 存在しない_i_dでは404とエラー_jso_nが返る()
     {
         $this->getJson('/api/v1/attendance-records/999999')
             ->assertStatus(404)

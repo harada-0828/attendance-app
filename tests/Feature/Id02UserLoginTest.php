@@ -28,12 +28,12 @@ class Id02UserLoginTest extends TestCase
         $this->createGeneralUser();
 
         $this->followingRedirects()
-             ->from('/login')
-             ->post('/login', [
-                 'email' => '',
-                 'password' => 'password123',
-             ])
-             ->assertSee('メールアドレスを入力してください', false);
+            ->from('/login')
+            ->post('/login', [
+                'email' => '',
+                'password' => 'password123',
+            ])
+            ->assertSee('メールアドレスを入力してください', false);
     }
 
     /** @test */
@@ -42,12 +42,12 @@ class Id02UserLoginTest extends TestCase
         $this->createGeneralUser();
 
         $this->followingRedirects()
-             ->from('/login')
-             ->post('/login', [
-                 'email' => 'general@example.com',
-                 'password' => '',
-             ])
-             ->assertSee('パスワードを入力してください', false);
+            ->from('/login')
+            ->post('/login', [
+                'email' => 'general@example.com',
+                'password' => '',
+            ])
+            ->assertSee('パスワードを入力してください', false);
     }
 
     /** @test */
@@ -56,11 +56,11 @@ class Id02UserLoginTest extends TestCase
         $this->createGeneralUser();
 
         $this->followingRedirects()
-             ->from('/login')
-             ->post('/login', [
-                 'email' => 'wrong@example.com',
-                 'password' => 'password123',
-             ])
-             ->assertSee('ログイン情報が登録されていません', false);
+            ->from('/login')
+            ->post('/login', [
+                'email' => 'wrong@example.com',
+                'password' => 'password123',
+            ])
+            ->assertSee('ログイン情報が登録されていません', false);
     }
 }

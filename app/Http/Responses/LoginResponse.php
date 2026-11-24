@@ -12,7 +12,6 @@ class LoginResponse implements LoginResponseContract
      * ログインユーザーの権限に応じてリダイレクト先レスポンスを生成する。
      *
      * @param  Request  $request
-     * @return Response
      */
     public function toResponse($request): Response
     {

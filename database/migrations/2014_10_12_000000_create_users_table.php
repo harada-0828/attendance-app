@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->dateTime('email_verified_at')->nullable(); 
+            $table->dateTime('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('admin_status')->default(false); // true: 管理者, false: 一般ユーザー
-            $table->rememberToken(); 
+            $table->rememberToken();
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
         });

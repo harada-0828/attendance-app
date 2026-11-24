@@ -14,7 +14,7 @@ class Id19SanctumAuthTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function 未認証時に書き込み系APIで401が返る()
+    public function 未認証時に書き込み系_ap_iで401が返る()
     {
         $owner = User::create([
             'name' => '勤怠所有者',
@@ -41,7 +41,7 @@ class Id19SanctumAuthTest extends TestCase
                 'message' => 'Unauthenticated.',
             ]);
 
-        $this->putJson('/api/v1/attendance-records/' . $record->id, [
+        $this->putJson('/api/v1/attendance-records/'.$record->id, [
             'date' => '2026-06-10',
             'clock_in' => '09:00:00',
             'clock_out' => '19:00:00',
@@ -51,7 +51,7 @@ class Id19SanctumAuthTest extends TestCase
                 'message' => 'Unauthenticated.',
             ]);
 
-        $this->deleteJson('/api/v1/attendance-records/' . $record->id)
+        $this->deleteJson('/api/v1/attendance-records/'.$record->id)
             ->assertStatus(401)
             ->assertJson([
                 'message' => 'Unauthenticated.',
@@ -78,7 +78,7 @@ class Id19SanctumAuthTest extends TestCase
             'clock_out' => '2026-06-12 18:00:00',
         ]);
 
-        $this->putJson('/api/v1/attendance-records/' . $record->id, [
+        $this->putJson('/api/v1/attendance-records/'.$record->id, [
             'date' => '2026-06-12',
             'clock_in' => '09:30:00',
             'clock_out' => '18:30:00',
@@ -88,7 +88,7 @@ class Id19SanctumAuthTest extends TestCase
             ->assertJsonPath('data.clock_in', '09:30:00')
             ->assertJsonPath('data.clock_out', '18:30:00');
 
-        $this->deleteJson('/api/v1/attendance-records/' . $record->id)
+        $this->deleteJson('/api/v1/attendance-records/'.$record->id)
             ->assertStatus(204);
 
         $this->assertDatabaseMissing('attendances', [
@@ -124,7 +124,7 @@ class Id19SanctumAuthTest extends TestCase
             'clock_out' => '2026-06-13 18:00:00',
         ]);
 
-        $this->putJson('/api/v1/attendance-records/' . $record->id, [
+        $this->putJson('/api/v1/attendance-records/'.$record->id, [
             'date' => '2026-06-13',
             'clock_in' => '10:00:00',
             'clock_out' => '19:00:00',
@@ -134,7 +134,7 @@ class Id19SanctumAuthTest extends TestCase
                 'error' => 'この操作を実行する権限がありません。',
             ]);
 
-        $this->deleteJson('/api/v1/attendance-records/' . $record->id)
+        $this->deleteJson('/api/v1/attendance-records/'.$record->id)
             ->assertStatus(403)
             ->assertJson([
                 'error' => 'この操作を実行する権限がありません。',

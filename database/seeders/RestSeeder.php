@@ -11,8 +11,6 @@ class RestSeeder extends Seeder
 {
     /**
      * 全勤怠レコードに対する休憩データの初期シードを実行する。
-     *
-     * @return void
      */
     public function run(): void
     {

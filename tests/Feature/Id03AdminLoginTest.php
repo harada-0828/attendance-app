@@ -28,12 +28,12 @@ class Id03AdminLoginTest extends TestCase
         $this->createAdminUser();
 
         $this->followingRedirects()
-             ->from('/admin/login')
-             ->post('/admin/login', [
-                 'email' => '',
-                 'password' => 'password123',
-             ])
-             ->assertSee('メールアドレスを入力してください', false);
+            ->from('/admin/login')
+            ->post('/admin/login', [
+                'email' => '',
+                'password' => 'password123',
+            ])
+            ->assertSee('メールアドレスを入力してください', false);
     }
 
     /** @test */
@@ -42,12 +42,12 @@ class Id03AdminLoginTest extends TestCase
         $this->createAdminUser();
 
         $this->followingRedirects()
-             ->from('/admin/login')
-             ->post('/admin/login', [
-                 'email' => 'admin@example.com',
-                 'password' => '',
-             ])
-             ->assertSee('パスワードを入力してください', false);
+            ->from('/admin/login')
+            ->post('/admin/login', [
+                'email' => 'admin@example.com',
+                'password' => '',
+            ])
+            ->assertSee('パスワードを入力してください', false);
     }
 
     /** @test */
@@ -56,11 +56,11 @@ class Id03AdminLoginTest extends TestCase
         $this->createAdminUser();
 
         $this->followingRedirects()
-             ->from('/admin/login')
-             ->post('/admin/login', [
-                 'email' => 'wrong-admin@example.com',
-                 'password' => 'password123',
-             ])
-             ->assertSee('ログイン情報が登録されていません', false);
+            ->from('/admin/login')
+            ->post('/admin/login', [
+                'email' => 'wrong-admin@example.com',
+                'password' => 'password123',
+            ])
+            ->assertSee('ログイン情報が登録されていません', false);
     }
 }

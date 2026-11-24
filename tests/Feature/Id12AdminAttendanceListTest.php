@@ -80,12 +80,12 @@ class Id12AdminAttendanceListTest extends TestCase
         $admin = $this->createAdminAndUsers();
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/list')
-             ->assertStatus(200)
-             ->assertSee('スタッフA', false)
-             ->assertSee('スタッフB', false)
-             ->assertSee('09:00', false)
-             ->assertSee('09:30', false);
+            ->get('/admin/attendance/list')
+            ->assertStatus(200)
+            ->assertSee('スタッフA', false)
+            ->assertSee('スタッフB', false)
+            ->assertSee('09:00', false)
+            ->assertSee('09:30', false);
 
         Carbon::setTestNow();
     }
@@ -96,9 +96,9 @@ class Id12AdminAttendanceListTest extends TestCase
         $admin = $this->createAdminAndUsers();
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/list?date=2026-11-18')
-             ->assertStatus(200)
-             ->assertSee('08:50', false);
+            ->get('/admin/attendance/list?date=2026-11-18')
+            ->assertStatus(200)
+            ->assertSee('08:50', false);
 
         Carbon::setTestNow();
     }
@@ -109,9 +109,9 @@ class Id12AdminAttendanceListTest extends TestCase
         $admin = $this->createAdminAndUsers();
 
         $this->actingAs($admin)
-             ->get('/admin/attendance/list?date=2026-11-20')
-             ->assertStatus(200)
-             ->assertSee('09:10', false);
+            ->get('/admin/attendance/list?date=2026-11-20')
+            ->assertStatus(200)
+            ->assertSee('09:10', false);
 
         Carbon::setTestNow();
     }

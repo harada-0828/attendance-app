@@ -9,8 +9,6 @@ class StoreAttendanceRecordRequest extends FormRequest
 {
     /**
      * リクエストの認可を判定する。
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
